@@ -1,0 +1,38 @@
+{
+    "name": "fomvasss/laravel-currency",
+    "description": "",
+    "keywords": [
+        "money",
+        "currency",
+        "coin",
+        "rate",
+        "convert",
+        "laravel"
+    ],
+    "authors": [
+        {
+            "name": "Vasyl Fomin",
+            "email": "fomvasss@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "license": "MIT",
+    "require": {
+        "illuminate/support": "^5.8|^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Fomvasss\\Currency\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Fomvasss\\Currency\\ServiceProvider"
+            ],
+            "aliases": {
+                "Currency": "Fomvasss\\Currency\\Facades\\Currency"
+            }
+        }
+    }
+}
