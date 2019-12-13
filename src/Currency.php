@@ -89,7 +89,7 @@ class Currency
 
     protected function prepareValue($value, $code)
     {
-        if ($this->config("currencies.divide_result") && ($coin = $this->config("currencies.$code.coin", 0))) {
+        if ($this->config("divide_result") && ($coin = $this->config("currencies.$code.coin", 0))) {
             $value = $value / $coin;
         }
 
