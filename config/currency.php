@@ -7,6 +7,11 @@ return [
      */
     'default' => 'RUB',
 
+    /*
+     * Default  result divide to coin.
+     */
+    'divide_result' => false,
+
     /**
      * All currencies.
      */

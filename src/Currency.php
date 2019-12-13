@@ -40,6 +40,8 @@ class Currency
 
         $symbol = $symbol ?? $this->config("currencies.$code.symbol", "");
 
+        $value = $this->prepareValue($value, $code);
+
         $result = number_format($value, $precision, $decimalSeparator, $thousandSeparator);
 
         if ($symbol) {
@@ -82,6 +84,15 @@ class Currency
         }
 
         // Return value
+        return $this->prepareValue($value, $to);
+    }
+
+    protected function prepareValue($value, $code)
+    {
+        if ($this->config("currencies.divide_result") && ($coin = $this->config("currencies.$code.coin", 0))) {
+            $value = $value / $coin;
+        }
+
         return $value;
     }
 
