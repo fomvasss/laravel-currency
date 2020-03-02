@@ -7,6 +7,11 @@ return [
      */
     'default' => 'RUB',
 
+    /*
+     * Default  result divide to coin.
+     */
+    'divide_result' => false,
+
     /**
      * All currencies.
      */
@@ -22,6 +27,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'AMD' => [
             'code' => 'AMD',
@@ -34,6 +40,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'AWG' => [
             'code' => 'AWG',
@@ -46,6 +53,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'AUD' => [
             'code' => 'AUD',
@@ -58,6 +66,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BSD' => [
             'code' => 'BSD',
@@ -70,6 +79,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BHD' => [
             'code' => 'BHD',
@@ -82,6 +92,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BDT' => [
             'code' => 'BDT',
@@ -94,6 +105,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BZD' => [
             'code' => 'BZD',
@@ -106,6 +118,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BMD' => [
             'code' => 'BMD',
@@ -118,6 +131,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BOB' => [
             'code' => 'BOB',
@@ -130,6 +144,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BAM' => [
             'code' => 'BAM',
@@ -142,6 +157,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BWP' => [
             'code' => 'BWP',
@@ -154,6 +170,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BRL' => [
             'code' => 'BRL',
@@ -166,6 +183,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'BND' => [
             'code' => 'BND',
@@ -178,6 +196,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CAD' => [
             'code' => 'CAD',
@@ -190,6 +209,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'KYD' => [
             'code' => 'KYD',
@@ -202,6 +222,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CLP' => [
             'code' => 'CLP',
@@ -214,6 +235,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CNY' => [
             'code' => 'CNY',
@@ -226,6 +248,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'COP' => [
             'code' => 'COP',
@@ -238,6 +261,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CRC' => [
             'code' => 'CRC',
@@ -250,6 +274,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'HRK' => [
             'code' => 'HRK',
@@ -262,6 +287,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CUC' => [
             'code' => 'CUC',
@@ -274,6 +300,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CUP' => [
             'code' => 'CUP',
@@ -286,6 +313,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CYP' => [
             'code' => 'CYP',
@@ -298,6 +326,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CZK' => [
             'code' => 'CZK',
@@ -310,6 +339,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'DKK' => [
             'code' => 'DKK',
@@ -322,6 +352,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'DOP' => [
             'code' => 'DOP',
@@ -334,6 +365,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'XCD' => [
             'code' => 'XCD',
@@ -346,6 +378,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'EGP' => [
             'code' => 'EGP',
@@ -358,6 +391,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'SVC' => [
             'code' => 'SVC',
@@ -370,6 +404,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'EUR' => [
             'code' => 'EUR',
@@ -382,6 +417,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'GHC' => [
             'code' => 'GHC',
@@ -394,6 +430,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'GIP' => [
             'code' => 'GIP',
@@ -406,6 +443,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'GTQ' => [
             'code' => 'GTQ',
@@ -418,6 +456,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'HNL' => [
             'code' => 'HNL',
@@ -430,6 +469,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'HKD' => [
             'code' => 'HKD',
@@ -442,6 +482,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'HUF' => [
             'code' => 'HUF',
@@ -454,6 +495,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'ISK' => [
             'code' => 'ISK',
@@ -466,6 +508,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'INR' => [
             'code' => 'INR',
@@ -478,6 +521,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'IDR' => [
             'code' => 'IDR',
@@ -490,6 +534,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'IRR' => [
             'code' => 'IRR',
@@ -502,6 +547,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'JMD' => [
             'code' => 'JMD',
@@ -514,6 +560,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'JPY' => [
             'code' => 'JPY',
@@ -526,6 +573,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'JOD' => [
             'code' => 'JOD',
@@ -538,6 +586,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'KES' => [
             'code' => 'KES',
@@ -550,6 +599,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'KWD' => [
             'code' => 'KWD',
@@ -562,6 +612,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'LVL' => [
             'code' => 'LVL',
@@ -574,6 +625,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'LBP' => [
             'code' => 'LBP',
@@ -586,6 +638,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'LTL' => [
             'code' => 'LTL',
@@ -598,6 +651,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'MKD' => [
             'code' => 'MKD',
@@ -610,6 +664,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'MYR' => [
             'code' => 'MYR',
@@ -622,6 +677,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'MTL' => [
             'code' => 'MTL',
@@ -634,6 +690,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'MUR' => [
             'code' => 'MUR',
@@ -646,6 +703,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'MXN' => [
             'code' => 'MXN',
@@ -658,6 +716,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'MZM' => [
             'code' => 'MZM',
@@ -670,6 +729,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'NPR' => [
             'code' => 'NPR',
@@ -682,6 +742,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'ANG' => [
             'code' => 'ANG',
@@ -694,6 +755,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'ILS' => [
             'code' => 'ILS',
@@ -706,6 +768,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'TRY' => [
             'code' => 'TRY',
@@ -718,6 +781,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'NZD' => [
             'code' => 'NZD',
@@ -730,6 +794,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'NOK' => [
             'code' => 'NOK',
@@ -742,6 +807,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'PKR' => [
             'code' => 'PKR',
@@ -754,6 +820,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'PEN' => [
             'code' => 'PEN',
@@ -766,6 +833,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'UYU' => [
             'code' => 'UYU',
@@ -778,6 +846,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'PHP' => [
             'code' => 'PHP',
@@ -790,6 +859,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'PLN' => [
             'code' => 'PLN',
@@ -802,6 +872,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'GBP' => [
             'code' => 'GBP',
@@ -814,6 +885,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'OMR' => [
             'code' => 'OMR',
@@ -826,6 +898,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'RON' => [
             'code' => 'RON',
@@ -838,6 +911,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'ROL' => [
             'code' => 'ROL',
@@ -850,6 +924,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'RUB' => [
             'code' => 'RUB',
@@ -862,6 +937,7 @@ return [
             'exchangeRate' => null,
             'active' => true,
             'format' => '1,0.00₽',
+            'coin' => 100,
         ],
         'SAR' => [
             'code' => 'SAR',
@@ -874,6 +950,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'SGD' => [
             'code' => 'SGD',
@@ -886,6 +963,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'SKK' => [
             'code' => 'SKK',
@@ -898,6 +976,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'SIT' => [
             'code' => 'SIT',
@@ -910,6 +989,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'ZAR' => [
             'code' => 'ZAR',
@@ -922,6 +1002,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'KRW' => [
             'code' => 'KRW',
@@ -934,6 +1015,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'SZL' => [
             'code' => 'SZL',
@@ -946,6 +1028,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'SEK' => [
             'code' => 'SEK',
@@ -958,6 +1041,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'CHF' => [
             'code' => 'CHF',
@@ -970,6 +1054,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'TZS' => [
             'code' => 'TZS',
@@ -982,6 +1067,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'THB' => [
             'code' => 'THB',
@@ -994,6 +1080,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'TOP' => [
             'code' => 'TOP',
@@ -1006,6 +1093,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'AED' => [
             'code' => 'AED',
@@ -1018,6 +1106,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'UAH' => [
             'code' => 'UAH',
@@ -1030,6 +1119,7 @@ return [
             'exchangeRate' => 25,
             'active' => true,
             'format' => '1,0.00₴',
+            'coin' => 100,
         ],
         'USD' => [
             'code' => 'USD',
@@ -1042,6 +1132,7 @@ return [
             'exchangeRate' => 1.00000000,
             'active' => true,
             'format' => '$1,0.00',
+            'coin' => 100,
         ],
         'VUV' => [
             'code' => 'VUV',
@@ -1054,6 +1145,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'VEF' => [
             'code' => 'VEF',
@@ -1066,6 +1158,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'VEB' => [
             'code' => 'VEB',
@@ -1078,6 +1171,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'VND' => [
             'code' => 'VND',
@@ -1090,6 +1184,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
         'ZWD' => [
             'code' => 'ZWD',
@@ -1102,6 +1197,7 @@ return [
             'exchangeRate' => null,
             'active' => false,
             'format' => '',
+            'coin' => 100,
         ],
     ]
 ];
