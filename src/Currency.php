@@ -205,17 +205,14 @@ class Currency
     }
 
     /**
-     * Get array of supported/active currencies from config.
+     * Get array of active currencies from config.
+     * Returns all currencies defined in config (uncommented).
      *
      * @return array
      */
     public function getActiveCurrencies(): array
     {
-        $currencies = $this->config['currencies'] ?? [];
-
-        return array_filter($currencies, function ($currency) {
-            return $currency['active'] ?? false;
-        });
+        return $this->config['currencies'] ?? [];
     }
 
     /**
