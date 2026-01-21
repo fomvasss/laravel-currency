@@ -226,7 +226,7 @@ try {
 
 ## Requirements
 
-- PHP 8.0+
+- PHP 8.1+
 - Laravel 9.x, 10.x, 11.x, or 12.x
 
 ## License

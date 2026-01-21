@@ -32,6 +32,7 @@ All notable changes to `laravel-currency` will be documented in this file.
 - Updated dependencies to support modern Laravel versions
 - **Optimized currency configuration** - Removed unused fields (exchangeRate, format, coin, active)
 - **Simplified active currency management** - All currencies in config are active by default
+- **Updated minimum PHP version to 8.1+** - Security update to avoid CVE-2025-64500
 
 ### Fixed
 - Various bug fixes and improvements
