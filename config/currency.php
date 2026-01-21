@@ -5,7 +5,7 @@ return [
     /**
      * Default currency.
      */
-    'default' => 'RUB',
+    'default' => 'USD',
 
     /*
      * Default  result divide to coin.
