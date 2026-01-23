@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static string format(float $amount, string $currency, bool $includeSymbol = true)
  * @method static array getCurrencyConfig(string $currency)
  * @method static int getPrecision(string $currency)
+ * @method static int getDefaultPrecision()
  * @method static string getBaseCurrency()
  * @method static \Fomvasss\Currency\Currency setBaseCurrency(string $currency)
  * @method static \Fomvasss\Currency\Currency setRateProvider(\Fomvasss\Currency\Contracts\RateProvider|string $provider)

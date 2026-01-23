@@ -278,7 +278,17 @@ class Currency
     public function getPrecision(string $currency): int
     {
         $config = $this->getCurrencyConfig($currency);
-        return $config['precision'] ?? 2;
+        return $config['precision'] ?? $this->config['default_precision'] ?? 2;
+    }
+
+    /**
+     * Get default precision from config.
+     *
+     * @return int
+     */
+    public function getDefaultPrecision(): int
+    {
+        return $this->config['default_precision'] ?? 2;
     }
 
     /**

@@ -1,14 +1,17 @@
 <?php
+
 return [
     /**
      * Default currency.
      */
     'default' => 'UAH',
+    
     /**
      * Default rate provider.
      * Use a key from the 'providers' array or provide a custom class name that implements RateProvider interface.
      */
     'default_provider' => env('CURRENCY_DEFAULT_PROVIDER', 'monobank'),
+    
     /**
      * Available rate providers.
      * Key-value pairs where key is the provider name and value is the class name.
@@ -22,10 +25,12 @@ return [
         'currencyapi' => \Fomvasss\Currency\RateProviders\CurrencyApiProvider::class,
         'fixer' => \Fomvasss\Currency\RateProviders\FixerProvider::class,
     ],
+    
     /**
      * Cache TTL in seconds for currency rates.
      */
     'cache_ttl' => env('CURRENCY_CACHE_TTL', 3600),
+    
     /**
      * Default rate type for currency conversion.
      * Options: 'buy', 'sell', 'average'
@@ -34,23 +39,34 @@ return [
      * - 'average' - Average of buy and sell rates
      */
     'default_rate_type' => env('CURRENCY_DEFAULT_RATE_TYPE', 'average'),
+
     /**
+     * Default number of decimal places for currency amounts.
+     * This setting can be overridden by individual currency precision settings.
+     */
+    'default_precision' => env('CURRENCY_DEFAULT_PRECISION', 2),
+    
+    /**
+     * 
      * API key for ExchangeRatesAPI (optional, can use free alternative)
      * Get your key at: https://exchangeratesapi.io/
      */
     'exchange_rates_api_key' => env('EXCHANGE_RATES_API_KEY', null),
+    
     /**
      * API key for CurrencyAPI
      * Get your key at: https://currencyapi.com/
      * Free tier: 300 requests/month
      */
     'currencyapi_key' => env('CURRENCYAPI_KEY', null),
+    
     /**
      * API key for Fixer.io
      * Get your key at: https://fixer.io/
      * Free tier: 100 requests/month
      */
     'fixer_api_key' => env('FIXER_API_KEY', null),
+    
     /**
      * Active currencies configuration.
      * 
