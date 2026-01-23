@@ -19,7 +19,7 @@ All notable changes to `laravel-currency` will be documented in this file.
 - Active currencies management
 - Comprehensive test coverage
 - Laravel 9-12 support
-- PHP 8.0+ support
+- PHP 8.1+ support
 - Rate provider interface for custom implementations
 - Dynamic rate provider switching
 - Facade for convenient access
