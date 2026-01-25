@@ -47,4 +47,11 @@ interface RateProvider
      * @return int
      */
     public function getSupportedCurrenciesCount(): int;
+
+    /**
+     * Clear both regular and fallback cache for this provider.
+     *
+     * @return void
+     */
+    public function clearCache(): void;
 }

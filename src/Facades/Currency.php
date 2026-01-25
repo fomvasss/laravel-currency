@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static int getSupportedCurrenciesCount()
  * @method static bool isSupported(string $currency)
  * @method static array getAllCurrencies()
+ * @method static void clearCache()
  *
  * @see \Fomvasss\Currency\Currency
  */

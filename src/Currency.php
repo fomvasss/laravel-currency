@@ -367,6 +367,16 @@ class Currency
     }
 
     /**
+     * Clear rate cache for current provider.
+     *
+     * @return void
+     */
+    public function clearCache(): void
+    {
+        $this->rateProvider->clearCache();
+    }
+
+    /**
      * Set rate provider.
      * Accepts either a RateProvider instance, a provider alias from config, or a class name.
      *

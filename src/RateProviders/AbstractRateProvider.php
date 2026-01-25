@@ -3,6 +3,7 @@
 namespace Fomvasss\Currency\RateProviders;
 
 use Fomvasss\Currency\Contracts\RateProvider;
+use Fomvasss\Currency\Events\CurrencyRateFetchFailed;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -121,10 +122,24 @@ abstract class AbstractRateProvider implements RateProvider
                     return $rates;
                 }
 
+                // API returned error status
+                event(new CurrencyRateFetchFailed(
+                    static::class,
+                    'API returned error status: ' . $response->status(),
+                    false
+                ));
+
                 // Try fallback cache if API returns error
                 return $this->tryFallbackCache($fallbackCacheKey);
             } catch (\Exception $e) {
                 \Log::error('Currency rate provider error: ' . $e->getMessage());
+                
+                // Dispatch event for exception
+                event(new CurrencyRateFetchFailed(
+                    static::class,
+                    $e->getMessage(),
+                    false
+                ));
                 
                 // Try fallback cache on exception
                 return $this->tryFallbackCache($fallbackCacheKey);
@@ -145,12 +160,32 @@ abstract class AbstractRateProvider implements RateProvider
         
         if ($fallbackRates && !empty($fallbackRates)) {
             \Log::warning('Using fallback cached rates for ' . class_basename($this));
+            
+            // Dispatch event that we're using fallback cache
+            event(new CurrencyRateFetchFailed(
+                static::class,
+                'Using fallback cached rates',
+                true,
+                $fallbackRates
+            ));
+            
             return $fallbackRates;
         }
         
         // Last resort - static fallback rates
         \Log::error('No cached rates available, using static fallback for ' . class_basename($this));
-        return $this->getFallbackRates();
+        
+        $staticRates = $this->getFallbackRates();
+        
+        // Dispatch event that we're using static fallback
+        event(new CurrencyRateFetchFailed(
+            static::class,
+            'No cached rates available, using static fallback',
+            true,
+            $staticRates
+        ));
+        
+        return $staticRates;
     }
 
     /**
@@ -183,5 +218,16 @@ abstract class AbstractRateProvider implements RateProvider
     {
         $this->cacheTtl = $seconds;
         return $this;
+    }
+
+    /**
+     * Clear both regular and fallback cache for this provider.
+     *
+     * @return void
+     */
+    public function clearCache(): void
+    {
+        Cache::forget($this->getCacheKey());
+        Cache::forget($this->getCacheKey() . '_fallback');
     }
 }

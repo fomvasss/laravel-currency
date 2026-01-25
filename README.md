@@ -202,6 +202,59 @@ Currency::useProvider('mybank');
 
 For detailed custom provider development, see [Custom Providers Guide](CUSTOM_PROVIDERS.md).
 
+## Event Handling
+
+The package dispatches `CurrencyRateFetchFailed` event when API calls fail, allowing you to implement custom error handling:
+
+### Create Listener
+
+```php
+// app/Listeners/NotifyAboutCurrencyRateFailure.php
+namespace App\Listeners;
+
+use Fomvasss\Currency\Events\CurrencyRateFetchFailed;
+
+class NotifyAboutCurrencyRateFailure
+{
+    public function handle(CurrencyRateFetchFailed $event): void
+    {
+        // Log to Slack, send email, etc.
+        Log::channel('slack')->error('Currency API failed', [
+            'provider' => $event->providerClass,
+            'error' => $event->errorMessage,
+            'using_fallback' => $event->usingFallback,
+        ]);
+        
+        // Send notification only for critical failures
+        if (!$event->usingFallback) {
+            // No fallback available - alert admins!
+            Notification::route('mail', 'admin@example.com')
+                ->notify(new CurrencyApiDown($event));
+        }
+    }
+}
+```
+
+### Register Listener
+
+```php
+// app/Providers/EventServiceProvider.php
+use Fomvasss\Currency\Events\CurrencyRateFetchFailed;
+use App\Listeners\NotifyAboutCurrencyRateFailure;
+
+protected $listen = [
+    CurrencyRateFetchFailed::class => [
+        NotifyAboutCurrencyRateFailure::class,
+    ],
+];
+```
+
+**Event Properties:**
+- `$providerClass` - Provider that failed
+- `$errorMessage` - Error description
+- `$usingFallback` - Whether fallback cache is being used
+- `$fallbackRates` - Fallback rates array (if any)
+
 ## Fallback Strategy
 
 jsDelivr provider is excellent as a fallback when primary APIs are unavailable:
