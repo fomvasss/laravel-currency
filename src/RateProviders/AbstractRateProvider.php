@@ -103,21 +103,54 @@ abstract class AbstractRateProvider implements RateProvider
     protected function fetchRates(): array
     {
         $cacheKey = $this->getCacheKey();
+        $fallbackCacheKey = $this->getCacheKey() . '_fallback';
+        $fallbackTtl = config('currency.cache_ttl_fallback', 86400); // 1 day
 
-        return Cache::remember($cacheKey, $this->cacheTtl, function () {
+        return Cache::remember($cacheKey, $this->cacheTtl, function () use ($fallbackCacheKey, $fallbackTtl) {
             try {
                 $response = Http::timeout(10)->get($this->getApiUrl());
 
                 if ($response->successful()) {
-                    return $this->parseResponse($response->json());
+                    $rates = $this->parseResponse($response->json());
+                    
+                    // Store successful rates in long-term fallback cache
+                    if (!empty($rates)) {
+                        Cache::put($fallbackCacheKey, $rates, $fallbackTtl);
+                    }
+                    
+                    return $rates;
                 }
 
-                return $this->getFallbackRates();
+                // Try fallback cache if API returns error
+                return $this->tryFallbackCache($fallbackCacheKey);
             } catch (\Exception $e) {
                 \Log::error('Currency rate provider error: ' . $e->getMessage());
-                return $this->getFallbackRates();
+                
+                // Try fallback cache on exception
+                return $this->tryFallbackCache($fallbackCacheKey);
             }
         });
+    }
+
+    /**
+     * Try to get rates from fallback cache or use static rates.
+     *
+     * @param string $fallbackCacheKey
+     * @return array
+     */
+    protected function tryFallbackCache(string $fallbackCacheKey): array
+    {
+        // Try to get from long-term cache
+        $fallbackRates = Cache::get($fallbackCacheKey);
+        
+        if ($fallbackRates && !empty($fallbackRates)) {
+            \Log::warning('Using fallback cached rates for ' . class_basename($this));
+            return $fallbackRates;
+        }
+        
+        // Last resort - static fallback rates
+        \Log::error('No cached rates available, using static fallback for ' . class_basename($this));
+        return $this->getFallbackRates();
     }
 
     /**

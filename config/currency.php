@@ -30,6 +30,13 @@ return [
      * Cache TTL in seconds for currency rates.
      */
     'cache_ttl' => env('CURRENCY_CACHE_TTL', 3600),
+
+    /**
+     * Fallback cache TTL in seconds (when primary API is unavailable).
+     * Stores last successful rates for emergency use.
+     * Default: 86400 seconds (1 day)
+     */
+    'cache_ttl_fallback' => env('CURRENCY_CACHE_TTL_FALLBACK', 86400),
     
     /**
      * Default rate type for currency conversion.
