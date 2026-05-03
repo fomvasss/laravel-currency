@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Feature;
+namespace Fomvasss\Currency\Tests\Feature;
 
 use Fomvasss\Currency\Facades\Currency;
 use Fomvasss\Currency\Facades\CurrencyProvider;
 use Fomvasss\Currency\RateProviders\NbuRateProvider;
 use Fomvasss\Currency\RateProviders\MonobankRateProvider;
-use Tests\TestCase;
+use Fomvasss\Currency\Tests\TestCase;
 
 class ProviderConfigurationTest extends TestCase
 {

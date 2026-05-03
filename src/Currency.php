@@ -212,7 +212,9 @@ class Currency
      */
     public function getActiveCurrencies(): array
     {
-        return $this->config['currencies'] ?? [];
+        $currencies = $this->config['currencies'] ?? [];
+
+        return array_filter($currencies, fn($currency) => ($currency['active'] ?? true) === true);
     }
 
     /**
@@ -344,6 +346,16 @@ class Currency
     public function getProvider(): RateProvider
     {
         return $this->rateProvider;
+    }
+
+    /**
+     * Alias for getProvider().
+     *
+     * @return RateProvider
+     */
+    public function getRateProvider(): RateProvider
+    {
+        return $this->getProvider();
     }
 
     /**

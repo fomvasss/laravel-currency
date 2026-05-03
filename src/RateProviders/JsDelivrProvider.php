@@ -15,7 +15,7 @@ namespace Fomvasss\Currency\RateProviders;
  */
 class JsDelivrProvider extends AbstractRateProvider
 {
-    protected string $baseCurrency = 'EUR';
+    protected string $baseCurrency = 'UAH';
     protected string $baseUrl = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1';
 
     /**

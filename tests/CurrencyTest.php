@@ -37,6 +37,21 @@ class MockRateProvider implements RateProvider
     {
         $this->rates = $rates;
     }
+
+    public function getSupportedCurrencies(): array
+    {
+        return array_keys($this->rates);
+    }
+
+    public function getSupportedCurrenciesCount(): int
+    {
+        return count($this->rates);
+    }
+
+    public function clearCache(): void
+    {
+        // no-op for mock
+    }
 }
 
 class CurrencyTest extends TestCase

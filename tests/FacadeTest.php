@@ -8,9 +8,10 @@ class FacadeTest extends TestCase
 {
     public function test_facade_can_access_currency_methods()
     {
-        $this->assertTrue(method_exists(Currency::class, 'convert'));
-        $this->assertTrue(method_exists(Currency::class, 'getRate'));
-        $this->assertTrue(method_exists(Currency::class, 'format'));
+        $instance = \Fomvasss\Currency\Facades\Currency::getFacadeRoot();
+        $this->assertTrue(method_exists($instance, 'convert'));
+        $this->assertTrue(method_exists($instance, 'getRate'));
+        $this->assertTrue(method_exists($instance, 'format'));
     }
 
     public function test_facade_resolves_to_currency_instance()

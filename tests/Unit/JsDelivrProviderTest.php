@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Unit;
+namespace Fomvasss\Currency\Tests\Unit;
 
 use Fomvasss\Currency\RateProviders\JsDelivrProvider;
-use Tests\TestCase;
+use Fomvasss\Currency\Tests\TestCase;
 
 class JsDelivrProviderTest extends TestCase
 {
