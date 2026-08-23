@@ -41,4 +41,24 @@ class CurrencyRatesCommandTest extends TestCase
 
         Http::assertSentCount(1);
     }
+
+    public function test_date_option_shows_historical_rate()
+    {
+        Http::fake([
+            'bank.gov.ua/*' => Http::response([
+                ['cc' => 'USD', 'rate' => 37.8386],
+            ], 200),
+        ]);
+
+        $this->artisan('currency:rates', ['--provider' => 'nbu', '--currency' => 'USD', '--date' => '2024-01-15'])
+            ->expectsOutputToContain('Date: 2024-01-15')
+            ->expectsOutputToContain('37.8386')
+            ->assertExitCode(0);
+    }
+
+    public function test_date_option_fails_for_provider_without_historical_support()
+    {
+        $this->artisan('currency:rates', ['--provider' => 'monobank', '--date' => '2024-01-15'])
+            ->assertExitCode(1);
+    }
 }

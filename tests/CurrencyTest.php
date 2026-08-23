@@ -2,8 +2,10 @@
 
 namespace Fomvasss\Currency\Tests;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
 use Fomvasss\Currency\Contracts\RateProvider;
 use Fomvasss\Currency\Currency;
+use Illuminate\Support\Carbon;
 
 class MockRateProvider implements RateProvider
 {
@@ -51,6 +53,26 @@ class MockRateProvider implements RateProvider
     public function clearCache(): void
     {
         // no-op for mock
+    }
+}
+
+class MockHistoricalRateProvider extends MockRateProvider implements HistoricalRateProvider
+{
+    protected array $ratesAt = [];
+
+    public function setRatesAt(string $date, array $rates): void
+    {
+        $this->ratesAt[$date] = $rates;
+    }
+
+    public function getRatesAt(\DateTimeInterface $date): array
+    {
+        return $this->ratesAt[$date->format('Y-m-d')] ?? [];
+    }
+
+    public function getRateAt(string $currency, \DateTimeInterface $date): ?array
+    {
+        return $this->getRatesAt($date)[strtoupper($currency)] ?? null;
     }
 }
 
@@ -312,5 +334,107 @@ class CurrencyTest extends TestCase
         $this->expectExceptionMessage('Currency rate not found for: XYZ');
 
         $this->currency->getRates();
+    }
+
+    protected function historicalCurrency(): Currency
+    {
+        $provider = new MockHistoricalRateProvider();
+        $provider->setRatesAt('2024-01-15', [
+            'USD' => ['buy' => 37.5, 'sell' => 38.0],
+            'EUR' => ['buy' => 40.5, 'sell' => 41.0],
+        ]);
+
+        return new Currency($provider, config('currency'));
+    }
+
+    public function test_convert_at_direct()
+    {
+        $currency = $this->historicalCurrency();
+
+        // 100 USD * 37.75 (avg rate) = 3775 UAH
+        $result = $currency->convertAt(100, 'USD', 'UAH', Carbon::parse('2024-01-15'));
+        $this->assertEquals(3775.0, $result);
+    }
+
+    public function test_convert_at_reverse()
+    {
+        $currency = $this->historicalCurrency();
+
+        // 3775 UAH / 37.75 (avg rate) = 100 USD
+        $result = $currency->convertAt(3775, 'UAH', 'USD', Carbon::parse('2024-01-15'));
+        $this->assertEquals(100.0, $result);
+    }
+
+    public function test_convert_at_between_two_non_base_currencies()
+    {
+        $currency = $this->historicalCurrency();
+
+        // 100 USD * 37.75 = 3775 UAH; 3775 / 40.75 (avg EUR rate) = 92.64 EUR
+        $result = $currency->convertAt(100, 'USD', 'EUR', Carbon::parse('2024-01-15'));
+        $this->assertEquals(92.64, $result);
+    }
+
+    public function test_get_rate_at_for_base_currency_is_one()
+    {
+        $currency = $this->historicalCurrency();
+
+        $this->assertEquals(1.0, $currency->getRateAt('UAH', Carbon::parse('2024-01-15')));
+    }
+
+    public function test_get_rate_at_with_custom_base_currency()
+    {
+        $currency = $this->historicalCurrency();
+        $currency->setBaseCurrency('USD');
+
+        // 1 EUR = 40.75 UAH avg, 1 USD = 37.75 UAH avg -> 1 EUR = 40.75/37.75 USD
+        $rate = $currency->getRateAt('EUR', Carbon::parse('2024-01-15'));
+        $this->assertEqualsWithDelta(40.75 / 37.75, $rate, 0.0001);
+    }
+
+    public function test_convert_at_throws_logic_exception_for_provider_without_historical_support()
+    {
+        $currency = new Currency($this->provider, config('currency'));
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('MockRateProvider does not support historical rates');
+
+        $currency->convertAt(100, 'USD', 'EUR', Carbon::parse('2024-01-15'));
+    }
+
+    public function test_get_rate_at_throws_logic_exception_for_monobank()
+    {
+        $currency = new Currency(new \Fomvasss\Currency\RateProviders\MonobankRateProvider(), config('currency'));
+
+        $this->assertFalse($currency->supportsHistoricalRates());
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('MonobankRateProvider does not support historical rates');
+
+        $currency->getRateAt('USD', Carbon::parse('2024-01-15'));
+    }
+
+    public function test_convert_at_throws_exception_for_unknown_currency_with_date_in_message()
+    {
+        $currency = $this->historicalCurrency();
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Currency rate not found for: XYZ at 2024-01-15');
+
+        $currency->convertAt(100, 'XYZ', 'UAH', Carbon::parse('2024-01-15'));
+    }
+
+    public function test_convert_at_does_not_affect_subsequent_convert_result()
+    {
+        $provider = new MockHistoricalRateProvider();
+        $provider->setRatesAt('2024-01-15', [
+            'USD' => ['buy' => 37.5, 'sell' => 38.0],
+        ]);
+        $currency = new Currency($provider, config('currency'));
+
+        $currency->convertAt(100, 'USD', 'UAH', Carbon::parse('2024-01-15'));
+
+        // convert() still uses the provider's regular getRates() (40/41), unaffected by convertAt().
+        $result = $currency->convert(100, 'USD', 'UAH');
+        $this->assertEquals(4050.00, $result);
     }
 }

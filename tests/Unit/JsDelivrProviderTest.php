@@ -97,4 +97,20 @@ class JsDelivrProviderTest extends TestCase
         $this->assertArrayNotHasKey('USD', $rates);
         $this->assertArrayHasKey('EUR', $rates);
     }
+
+    #[Test]
+    public function it_builds_historical_api_url_with_date_in_path()
+    {
+        $provider = new JsDelivrProvider();
+        $reflection = new \ReflectionClass($provider);
+        $method = $reflection->getMethod('getHistoricalApiUrl');
+        $method->setAccessible(true);
+
+        $url = $method->invoke($provider, \Illuminate\Support\Carbon::parse('2024-03-06'));
+
+        $this->assertEquals(
+            'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-06/v1/currencies/uah.json',
+            $url
+        );
+    }
 }

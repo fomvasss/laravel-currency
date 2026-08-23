@@ -6,16 +6,6 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/fomvasss/laravel-currency.svg)](https://packagist.org/packages/fomvasss/laravel-currency)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## Support
-
-If this package is useful to you, consider supporting its development:
-
-[![Monobank](https://img.shields.io/badge/Donate-Monobank-black)](https://send.monobank.ua/jar/5xsqtHvVrY)
-[![Ko-Fi](https://img.shields.io/badge/Donate-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/fomvasss)
-[![USDT TRC20](https://img.shields.io/badge/Donate-USDT%20TRC20-26A17B?logo=tether&logoColor=white)](https://link.trustwallet.com/send?coin=195&address=THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t)
-
-> USDT TRC20 address: `THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf`
-
 A Laravel package for currency conversion and exchange rate management with multiple rate providers.
 
 ## Features
@@ -196,6 +186,69 @@ $amount = Currency::convert(100, 'EUR', 'GBP');
 
 `setBaseCurrency()` requires the current provider to have a rate for that currency — `getRates()`/`getRate()`/`convert()` throw `InvalidArgumentException` otherwise (e.g. `setBaseCurrency('JPY')` while the active provider doesn't support JPY).
 
+## Historical Rates
+
+Rate for a specific past date, e.g. to price an operation at the exchange rate that was
+active on the day it happened:
+
+```php
+use Fomvasss\Currency\Facades\Currency;
+
+$uah = Currency::convertAt(100, 'USD', 'UAH', '2024-01-15');   // uses the rate as of that date
+$rate = Currency::getRateAt('USD', '2024-01-15');              // null -> config default rate type
+$rates = Currency::getRatesAt('2024-01-15', 'all');            // ['USD' => ['buy' => ..., 'sell' => ...], ...]
+
+Currency::supportsHistoricalRates(); // bool — whether the active provider supports getRatesAt()
+```
+
+`convertAt()`/`getRateAt()`/`getRatesAt()` accept a `DateTimeInterface`. The helper accepts a
+string too:
+
+```php
+$uah = currency_convert_at(100, 'USD', 'UAH', '2024-01-15');
+```
+
+If the active provider doesn't support historical rates, all three throw `LogicException`
+(check `supportsHistoricalRates()` first if the provider may vary at runtime). If the provider
+has no rate for the requested currency on that date, `convertAt()`/`getRateAt()` throw
+`InvalidArgumentException` — same as the current-rate methods, but with the date included in
+the message (`"Currency rate not found for: USD at 2024-01-15"`).
+
+Support by provider:
+
+| Alias              | Historical rates | Notes                                                        |
+|--------------------|-------------------|--------------------------------------------------------------|
+| `nbu`              | Yes               | On a weekend/holiday, the NBU API returns the previous working day's rate under that day's date |
+| `privatbank`       | Yes               | Buy/sell are present only for USD/EUR (and not always) — other currencies/dates return no rate |
+| `jsdelivr`         | Yes               | Dates only from **2024-03-06** onwards; earlier dates return no rate (treated as "not found", not an error) |
+| `exchangeratesapi` | Yes               | Same `UAH`-as-base limitation as the current-rate endpoint when no API key is set (frankfurter.dev, ECB currencies only) |
+| `currencyapi`      | Yes               | Requires an API key |
+| `fixer`            | Yes               | Requires an API key; same free-tier limitations as the current-rate endpoint |
+| `monobank`         | **No**            | Monobank has no historical rates archive — `supportsHistoricalRates()` returns `false`, the historical methods throw `LogicException` |
+
+Historical rates never use the fallback cache: a rate for another day is worse than no rate at
+all, so a failed fetch (network error, error status, or "not found") returns an empty result
+instead of falling back to stale cached rates. A successful result for a given date is cached
+under its own key (separate from the current-rate cache) and, by default, kept **forever** —
+a rate for a past date never changes. Override with `cache_ttl_historical` /
+`CURRENCY_CACHE_TTL_HISTORICAL` if you'd rather expire it after a fixed number of seconds.
+
+To backfill historical operations in bulk, group them by date first and call `getRatesAt()`
+once per day instead of once per operation:
+
+```php
+foreach ($operationsByDate as $date => $operations) {
+    $rates = Currency::getRatesAt($date, 'all');
+
+    foreach ($operations as $operation) {
+        // use $rates[$operation->currency] directly, no extra HTTP/cache round-trip per operation
+    }
+}
+```
+
+`--date=` is also available on the `currency:convert` and `currency:rates` console commands
+(`php artisan currency:convert 100 usd uah --date=2024-01-15`).
+
 ## Checking Provider Capabilities
 
 ```php
@@ -235,6 +288,9 @@ Global PHP helpers are available without importing any class:
 // Convert amount
 $result = currency_convert(100, 'USD', 'EUR');
 $result = currency_convert(100, 'USD', 'EUR', 'sell');
+
+// Convert using a historical rate
+$result = currency_convert_at(100, 'USD', 'EUR', '2024-01-15');
 
 // Format with symbol
 $output = currency_format(1234.56, 'USD');          // $ 1,234.56
@@ -333,3 +389,13 @@ See the full guide with examples (API keys, multi-source fallback, mock for test
 ## License
 
 MIT License. See [LICENSE](LICENSE.md) for details.
+
+## Support
+
+If this package is useful to you, consider supporting its development:
+
+[![Monobank](https://img.shields.io/badge/Donate-Monobank-black)](https://send.monobank.ua/jar/5xsqtHvVrY)
+[![Ko-Fi](https://img.shields.io/badge/Donate-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/fomvasss)
+[![USDT TRC20](https://img.shields.io/badge/Donate-USDT%20TRC20-26A17B?logo=tether&logoColor=white)](https://link.trustwallet.com/send?coin=195&address=THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t)
+
+> USDT TRC20 address: `THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf`

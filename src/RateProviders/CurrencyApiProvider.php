@@ -2,11 +2,13 @@
 
 namespace Fomvasss\Currency\RateProviders;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
+
 /**
  * CurrencyAPI provider (https://currencyapi.com/)
  * Requires API key, has free tier with 300 requests/month.
  */
-class CurrencyApiProvider extends AbstractRateProvider
+class CurrencyApiProvider extends AbstractRateProvider implements HistoricalRateProvider
 {
     protected ?string $apiKey = null;
 
@@ -24,6 +26,17 @@ class CurrencyApiProvider extends AbstractRateProvider
     protected function getApiUrl(): string
     {
         return "https://api.currencyapi.com/v3/latest?apikey={$this->apiKey}&base_currency={$this->baseCurrency}";
+    }
+
+    /**
+     * Get the API endpoint URL for historical rates as of a specific date.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        return "https://api.currencyapi.com/v3/historical?apikey={$this->apiKey}&base_currency={$this->baseCurrency}&date={$date->format('Y-m-d')}";
     }
 
     /**

@@ -45,6 +45,12 @@ return [
     'cache_ttl_empty' => env('CURRENCY_CACHE_TTL_EMPTY', 60),
 
     /**
+     * Cache TTL in seconds for historical (per-date) rates. null = cache forever
+     * (rates for a past date never change).
+     */
+    'cache_ttl_historical' => env('CURRENCY_CACHE_TTL_HISTORICAL'),
+
+    /**
      * Default rate type for currency conversion.
      * Options: 'buy', 'sell', 'average'
      * - 'buy' - Bank buying rate (you sell to bank)

@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.7.0 - 2026-08-23
+
+### Added
+- Historical (per-date) exchange rates: `Currency::convertAt()`, `getRateAt()`, `getRatesAt()`, `supportsHistoricalRates()`, and the `currency_convert_at()` helper.
+- `--date=` option on `currency:convert` and `currency:rates` console commands.
+- `HistoricalRateProvider` contract for provider authors, and support for it in the `nbu`, `privatbank`, `jsdelivr`, `exchangeratesapi`, `currencyapi` and `fixer` providers (`monobank` has no historical archive and does not implement it).
+- `cache_ttl_historical` config option (`CURRENCY_CACHE_TTL_HISTORICAL`) — TTL for cached historical rates; `null` (default) caches them forever, since a rate for a past date never changes. Historical rates are cached under their own per-date key and never use the fallback cache.
+
+### Changed
+- `CurrencyRateFetchFailed` event gained a `?\DateTimeInterface $date` property (last constructor argument, defaults to `null`), set when the failure happened while fetching a historical rate.
+
 ## 2.6.0 - 2026-08-23
 
 ### Added

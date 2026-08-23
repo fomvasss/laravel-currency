@@ -6,16 +6,6 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/fomvasss/laravel-currency.svg)](https://packagist.org/packages/fomvasss/laravel-currency)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-## Підтримка
-
-Якщо цей пакет є корисним для вас, розгляньте можливість підтримки його розробки:
-
-[![Monobank](https://img.shields.io/badge/Donate-Monobank-black)](https://send.monobank.ua/jar/5xsqtHvVrY)
-[![Ko-Fi](https://img.shields.io/badge/Donate-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/fomvasss)
-[![USDT TRC20](https://img.shields.io/badge/Donate-USDT%20TRC20-26A17B?logo=tether&logoColor=white)](https://link.trustwallet.com/send?coin=195&address=THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t)
-
-> Адреса USDT TRC20: `THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf`
-
 Laravel-пакет для конвертації валют та управління курсами з підтримкою кількох провайдерів.
 
 ## Можливості
@@ -205,6 +195,68 @@ $amount = Currency::convert(100, 'EUR', 'GBP');
 
 `setBaseCurrency()` вимагає, щоб поточний провайдер мав курс для цієї валюти — інакше `getRates()`/`getRate()`/`convert()` кидають `InvalidArgumentException` (наприклад, `setBaseCurrency('JPY')`, коли активний провайдер не підтримує JPY).
 
+## Історичні курси
+
+Курс на конкретну минулу дату — наприклад, щоб оцінити операцію за курсом, що діяв у день
+самої операції:
+
+```php
+use Fomvasss\Currency\Facades\Currency;
+
+$uah = Currency::convertAt(100, 'USD', 'UAH', '2024-01-15');   // курс на цю дату
+$rate = Currency::getRateAt('USD', '2024-01-15');              // null -> тип курсу з конфігу
+$rates = Currency::getRatesAt('2024-01-15', 'all');            // ['USD' => ['buy' => ..., 'sell' => ...], ...]
+
+Currency::supportsHistoricalRates(); // bool — чи підтримує активний провайдер getRatesAt()
+```
+
+`convertAt()`/`getRateAt()`/`getRatesAt()` приймають `DateTimeInterface`. Хелпер приймає і рядок:
+
+```php
+$uah = currency_convert_at(100, 'USD', 'UAH', '2024-01-15');
+```
+
+Якщо активний провайдер не підтримує історичні курси, усі три методи кидають `LogicException`
+(перевіряйте `supportsHistoricalRates()` заздалегідь, якщо провайдер може змінюватись під час
+виконання). Якщо у провайдера немає курсу для запитаної валюти на цю дату, `convertAt()`/
+`getRateAt()` кидають `InvalidArgumentException` — так само, як методи поточного курсу, але з
+датою у тексті повідомлення (`"Currency rate not found for: USD at 2024-01-15"`).
+
+Підтримка по провайдерах:
+
+| Псевдонім          | Історичні курси | Примітки                                                     |
+|--------------------|------------------|----------------------------------------------------------------|
+| `nbu`              | Так              | У вихідний/святковий день API НБУ повертає курс попереднього робочого дня під датою вихідного |
+| `privatbank`       | Так              | Купівля/продаж є лише для USD/EUR (і не завжди) — інші валюти/дати курсу не повертають |
+| `jsdelivr`         | Так              | Дати лише з **2024-03-06**; раніші дати — без курсу (трактується як "не знайдено", не помилка) |
+| `exchangeratesapi` | Так              | Те саме обмеження з `UAH` як базою без API-ключа (frankfurter.dev, тільки валюти ECB) |
+| `currencyapi`      | Так              | Потрібен API-ключ |
+| `fixer`            | Так              | Потрібен API-ключ; ті самі обмеження безкоштовного тарифу, що й у поточного курсу |
+| `monobank`         | **Ні**           | У Монобанку немає архіву історичних курсів — `supportsHistoricalRates()` повертає `false`, історичні методи кидають `LogicException` |
+
+Історичні курси ніколи не використовують резервний (fallback) кеш: курс іншого дня гірший, ніж
+відсутність курсу, тож невдалий запит (мережева помилка, статус помилки або "не знайдено")
+повертає порожній результат замість застарілих кешованих курсів. Успішний результат на дату
+кешується під власним ключем (окремо від кешу поточних курсів) і за замовчуванням зберігається
+**назавжди** — курс на минулу дату не змінюється. Змінюється через `cache_ttl_historical` /
+`CURRENCY_CACHE_TTL_HISTORICAL`, якщо потрібен кеш з обмеженим TTL.
+
+Для масового заповнення історичних операцій — групуйте їх по даті і викликайте `getRatesAt()`
+один раз на день, а не на кожну операцію:
+
+```php
+foreach ($operationsByDate as $date => $operations) {
+    $rates = Currency::getRatesAt($date, 'all');
+
+    foreach ($operations as $operation) {
+        // використовуйте $rates[$operation->currency] напряму, без зайвого HTTP/кешу на кожну операцію
+    }
+}
+```
+
+`--date=` доступний і в консольних командах `currency:convert` та `currency:rates`
+(`php artisan currency:convert 100 usd uah --date=2024-01-15`).
+
 ## Перевірка можливостей провайдера
 
 ```php
@@ -244,6 +296,9 @@ Currency::clearCache();
 // Конвертація
 $result = currency_convert(100, 'USD', 'EUR');
 $result = currency_convert(100, 'USD', 'EUR', 'sell');
+
+// Конвертація за історичним курсом
+$result = currency_convert_at(100, 'USD', 'EUR', '2024-01-15');
 
 // Форматування із символом
 $output = currency_format(1234.56, 'USD');          // $ 1,234.56
@@ -362,3 +417,12 @@ try {
 
 MIT License. Дивіться [LICENSE](LICENSE.md).
 
+## Підтримка
+
+Якщо цей пакет є корисним для вас, розгляньте можливість підтримки його розробки:
+
+[![Monobank](https://img.shields.io/badge/Donate-Monobank-black)](https://send.monobank.ua/jar/5xsqtHvVrY)
+[![Ko-Fi](https://img.shields.io/badge/Donate-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/fomvasss)
+[![USDT TRC20](https://img.shields.io/badge/Donate-USDT%20TRC20-26A17B?logo=tether&logoColor=white)](https://link.trustwallet.com/send?coin=195&address=THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf&token_id=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t)
+
+> Адреса USDT TRC20: `THLgp6DxiAtbNHvgnKV56vk1L38UuUagKf`

@@ -2,6 +2,7 @@
 
 namespace Fomvasss\Currency;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
 use Fomvasss\Currency\Contracts\RateProvider;
 
 class Currency
@@ -63,6 +64,52 @@ class Currency
     }
 
     /**
+     * Convert amount from one currency to another using rates as of a specific date.
+     *
+     * @param float $amount Amount to convert
+     * @param string $from Source currency code
+     * @param string $to Target currency code
+     * @param \DateTimeInterface $date
+     * @param string|null $rateType Rate type: 'buy', 'sell', or 'average'. If null, uses config default.
+     * @return float Converted amount
+     */
+    public function convertAt(float $amount, string $from, string $to, \DateTimeInterface $date, ?string $rateType = null): float
+    {
+        $this->assertSupportsHistoricalRates();
+
+        $rateType = $this->resolveRateType($rateType);
+
+        $from = strtoupper($from);
+        $to = strtoupper($to);
+
+        if ($from === $to) {
+            return round($amount, $this->getPrecision($to));
+        }
+
+        $baseCurrency = $this->getBaseCurrency();
+        $rates = $this->rateProvider->getRatesAt($date);
+        $providerBaseCurrency = $this->rateProvider->getBaseCurrency();
+
+        if ($from !== $baseCurrency) {
+            $fromRate = $this->getRateValueAt($rates, $providerBaseCurrency, $from, $rateType);
+            if ($fromRate === null) {
+                throw new \InvalidArgumentException("Currency rate not found for: {$from} at {$date->format('Y-m-d')}");
+            }
+            $amount = $amount * $fromRate;
+        }
+
+        if ($to !== $baseCurrency) {
+            $toRate = $this->getRateValueAt($rates, $providerBaseCurrency, $to, $rateType);
+            if ($toRate === null) {
+                throw new \InvalidArgumentException("Currency rate not found for: {$to} at {$date->format('Y-m-d')}");
+            }
+            $amount = $amount / $toRate;
+        }
+
+        return round($amount, $this->getPrecision($to));
+    }
+
+    /**
      * Resolve rate type: explicit value, config default, or 'average'; validate it's allowed.
      *
      * @param string|null $rateType
@@ -91,7 +138,47 @@ class Currency
      */
     protected function getRateValue(string $currency, string $rateType = 'average'): ?float
     {
-        $providerBaseCurrency = $this->rateProvider->getBaseCurrency();
+        return $this->resolveRateValue(
+            fn (string $c) => $this->rateProvider->getRate($c),
+            $this->rateProvider->getBaseCurrency(),
+            $currency,
+            $rateType
+        );
+    }
+
+    /**
+     * Get rate value based on type (buy, sell, or average) from a given set of rates
+     * (e.g. rates as of a specific date), instead of querying the provider directly.
+     *
+     * @param array $rates
+     * @param string $providerBaseCurrency
+     * @param string $currency Currency code
+     * @param string $rateType Rate type: 'buy', 'sell', or 'average'
+     * @return float|null
+     */
+    protected function getRateValueAt(array $rates, string $providerBaseCurrency, string $currency, string $rateType): ?float
+    {
+        return $this->resolveRateValue(
+            fn (string $c) => $rates[$c] ?? null,
+            $providerBaseCurrency,
+            $currency,
+            $rateType
+        );
+    }
+
+    /**
+     * Shared rate resolution logic behind getRateValue()/getRateValueAt(): given a way to
+     * look up a currency's ['buy' => ..., 'sell' => ...] rate, resolve the rate relative to
+     * the current base currency (which may differ from the provider's own base currency).
+     *
+     * @param callable $getRate fn(string $currency): ?array
+     * @param string $providerBaseCurrency
+     * @param string $currency Currency code
+     * @param string $rateType Rate type: 'buy', 'sell', or 'average'
+     * @return float|null
+     */
+    protected function resolveRateValue(callable $getRate, string $providerBaseCurrency, string $currency, string $rateType): ?float
+    {
         $currentBaseCurrency = $this->getBaseCurrency();
 
         // If requesting rate for current base currency, return 1.0
@@ -101,13 +188,13 @@ class Currency
 
         // If base currency changed, we need to recalculate
         if ($currentBaseCurrency !== $providerBaseCurrency) {
-            // Get rate for the requested currency from provider (relative to provider's base)
-            $rate = $this->rateProvider->getRate($currency);
+            // Get rate for the requested currency (relative to provider's base)
+            $rate = $getRate($currency);
             if (!$rate) {
                 // Check if requesting the provider's base currency
                 if ($currency === $providerBaseCurrency) {
                     // Get the custom base currency rate and invert it
-                    $baseRate = $this->rateProvider->getRate($currentBaseCurrency);
+                    $baseRate = $getRate($currentBaseCurrency);
                     if (!$baseRate) {
                         return null;
                     }
@@ -120,8 +207,8 @@ class Currency
                 return null;
             }
 
-            // Get the custom base currency rate from provider
-            $baseRate = $this->rateProvider->getRate($currentBaseCurrency);
+            // Get the custom base currency rate
+            $baseRate = $getRate($currentBaseCurrency);
             if (!$baseRate) {
                 return null;
             }
@@ -135,7 +222,7 @@ class Currency
         }
 
         // Normal flow - use provider's base currency
-        $rate = $this->rateProvider->getRate($currency);
+        $rate = $getRate($currency);
 
         if (!$rate) {
             return null;
@@ -161,6 +248,27 @@ class Currency
     }
 
     /**
+     * Get exchange rate for specific currency relative to base currency, as of a specific date.
+     *
+     * @param string $currency Currency code
+     * @param \DateTimeInterface $date
+     * @param string|null $rateType Rate type: 'buy', 'sell', or 'average'. If null, uses config default.
+     * @return float|null
+     */
+    public function getRateAt(string $currency, \DateTimeInterface $date, ?string $rateType = null): ?float
+    {
+        $this->assertSupportsHistoricalRates();
+
+        $currency = strtoupper($currency);
+        $rateType = $this->resolveRateType($rateType);
+
+        $rates = $this->rateProvider->getRatesAt($date);
+        $providerBaseCurrency = $this->rateProvider->getBaseCurrency();
+
+        return $this->getRateValueAt($rates, $providerBaseCurrency, $currency, $rateType);
+    }
+
+    /**
      * Get all exchange rates relative to base currency.
      *
      * @param string|null $rateType Rate type: 'buy', 'sell', 'average', or 'all'. If null, uses config default.
@@ -172,6 +280,41 @@ class Currency
 
         $rates = $this->rateProvider->getRates();
         $providerBaseCurrency = $this->rateProvider->getBaseCurrency();
+
+        return $this->formatRates($rates, $providerBaseCurrency, $rateType);
+    }
+
+    /**
+     * Get all exchange rates relative to base currency, as of a specific date.
+     *
+     * @param \DateTimeInterface $date
+     * @param string|null $rateType Rate type: 'buy', 'sell', 'average', or 'all'. If null, uses config default.
+     * @return array
+     */
+    public function getRatesAt(\DateTimeInterface $date, ?string $rateType = null): array
+    {
+        $this->assertSupportsHistoricalRates();
+
+        $rateType = $this->resolveRateType($rateType, true);
+
+        $rates = $this->rateProvider->getRatesAt($date);
+        $providerBaseCurrency = $this->rateProvider->getBaseCurrency();
+
+        return $this->formatRates($rates, $providerBaseCurrency, $rateType);
+    }
+
+    /**
+     * Shared formatting logic behind getRates()/getRatesAt(): recalculate a set of rates
+     * relative to the current base currency (if it differs from the provider's own base
+     * currency) and reduce each entry to the requested rate type.
+     *
+     * @param array $rates
+     * @param string $providerBaseCurrency
+     * @param string $rateType Rate type: 'buy', 'sell', 'average', or 'all'
+     * @return array
+     */
+    protected function formatRates(array $rates, string $providerBaseCurrency, string $rateType): array
+    {
         $currentBaseCurrency = $this->getBaseCurrency();
 
         // If custom base currency is set and differs from provider's base currency
@@ -444,5 +587,26 @@ class Currency
     {
         $this->rateProvider = $this->providerManager->createProvider($providerName);
         return $this;
+    }
+
+    /**
+     * Check whether the current rate provider supports historical (per-date) rates.
+     *
+     * @return bool
+     */
+    public function supportsHistoricalRates(): bool
+    {
+        return $this->rateProvider instanceof HistoricalRateProvider;
+    }
+
+    /**
+     * @return void
+     * @throws \LogicException
+     */
+    protected function assertSupportsHistoricalRates(): void
+    {
+        if (!$this->supportsHistoricalRates()) {
+            throw new \LogicException(class_basename($this->rateProvider) . ' does not support historical rates');
+        }
     }
 }

@@ -2,11 +2,13 @@
 
 namespace Fomvasss\Currency\RateProviders;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
+
 /**
  * Fixer.io provider (https://fixer.io/)
  * Requires API key, has free tier with 100 requests/month.
  */
-class FixerProvider extends AbstractRateProvider
+class FixerProvider extends AbstractRateProvider implements HistoricalRateProvider
 {
     protected ?string $apiKey = null;
     protected string $apiUrl = 'https://data.fixer.io/api/latest';
@@ -25,6 +27,17 @@ class FixerProvider extends AbstractRateProvider
     protected function getApiUrl(): string
     {
         return "{$this->apiUrl}?access_key={$this->apiKey}&base={$this->baseCurrency}";
+    }
+
+    /**
+     * Get the API endpoint URL for historical rates as of a specific date.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        return dirname($this->apiUrl) . "/{$date->format('Y-m-d')}?access_key={$this->apiKey}&base={$this->baseCurrency}";
     }
 
     /**

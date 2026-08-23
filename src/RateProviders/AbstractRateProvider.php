@@ -29,6 +29,30 @@ abstract class AbstractRateProvider implements RateProvider
     abstract protected function parseResponse($response): array;
 
     /**
+     * Get the API endpoint URL for historical rates as of a specific date.
+     * Providers that support historical rates (and implement HistoricalRateProvider) override this.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        throw new \LogicException(class_basename($this) . ' does not support historical rates');
+    }
+
+    /**
+     * Parse historical API response and return normalized rates.
+     * Defaults to parseResponse() for providers whose historical response has the same shape.
+     *
+     * @param mixed $response
+     * @return array
+     */
+    protected function parseHistoricalResponse($response): array
+    {
+        return $this->parseResponse($response);
+    }
+
+    /**
      * Get exchange rates for all supported currencies.
      *
      * @return array
@@ -47,6 +71,31 @@ abstract class AbstractRateProvider implements RateProvider
     public function getRate(string $currency): ?array
     {
         $rates = $this->getRates();
+
+        return $rates[strtoupper($currency)] ?? null;
+    }
+
+    /**
+     * Get exchange rates for all supported currencies as of a specific date.
+     *
+     * @param \DateTimeInterface $date
+     * @return array
+     */
+    public function getRatesAt(\DateTimeInterface $date): array
+    {
+        return $this->fetchRatesAt($date);
+    }
+
+    /**
+     * Get exchange rate for specific currency as of a specific date.
+     *
+     * @param string $currency
+     * @param \DateTimeInterface $date
+     * @return array|null
+     */
+    public function getRateAt(string $currency, \DateTimeInterface $date): ?array
+    {
+        $rates = $this->getRatesAt($date);
 
         return $rates[strtoupper($currency)] ?? null;
     }
@@ -217,6 +266,113 @@ abstract class AbstractRateProvider implements RateProvider
         ));
         
         return $staticRates;
+    }
+
+    /**
+     * Fetch historical rates from API with caching.
+     *
+     * @param \DateTimeInterface $date
+     * @return array
+     */
+    protected function fetchRatesAt(\DateTimeInterface $date): array
+    {
+        $cacheKey = $this->getHistoricalCacheKey($date);
+
+        $rates = Cache::get($cacheKey);
+
+        if ($rates !== null) {
+            return $rates;
+        }
+
+        $rates = $this->fetchRatesFromApiAt($date);
+
+        if (empty($rates)) {
+            Cache::put($cacheKey, $rates, config('currency.cache_ttl_empty', 60));
+
+            return $rates;
+        }
+
+        $ttl = config('currency.cache_ttl_historical');
+
+        if ($ttl === null) {
+            Cache::forever($cacheKey, $rates);
+        } else {
+            Cache::put($cacheKey, $rates, $ttl);
+        }
+
+        return $rates;
+    }
+
+    /**
+     * Fetch historical rates from the remote API for a specific date.
+     * Unlike fetchRatesFromApi(), there is no fallback cache: a rate for another day
+     * is worse than no rate at all.
+     *
+     * @param \DateTimeInterface $date
+     * @return array
+     */
+    protected function fetchRatesFromApiAt(\DateTimeInterface $date): array
+    {
+        $url = $this->getHistoricalApiUrl($date);
+
+        try {
+            $response = Http::timeout(10)->get($url);
+
+            if ($response->successful()) {
+                $json = $response->json();
+
+                if (!is_array($json)) {
+                    Log::warning('Currency historical rate provider error: API returned a non-array response for ' . class_basename($this));
+
+                    event(new CurrencyRateFetchFailed(
+                        static::class,
+                        'API returned a non-array response',
+                        false,
+                        null,
+                        $date
+                    ));
+
+                    return [];
+                }
+
+                return $this->parseHistoricalResponse($json);
+            }
+
+            Log::warning('Currency historical rate provider error: API returned error status ' . $response->status() . ' for ' . class_basename($this));
+
+            event(new CurrencyRateFetchFailed(
+                static::class,
+                'API returned error status: ' . $response->status(),
+                false,
+                null,
+                $date
+            ));
+
+            return [];
+        } catch (\Throwable $e) {
+            Log::warning('Currency historical rate provider error: ' . $e->getMessage());
+
+            event(new CurrencyRateFetchFailed(
+                static::class,
+                $e->getMessage(),
+                false,
+                null,
+                $date
+            ));
+
+            return [];
+        }
+    }
+
+    /**
+     * Get cache key for historical rates on a specific date.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalCacheKey(\DateTimeInterface $date): string
+    {
+        return $this->getCacheKey() . '_' . $date->format('Y-m-d');
     }
 
     /**

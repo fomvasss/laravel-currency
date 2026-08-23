@@ -2,18 +2,20 @@
 
 namespace Fomvasss\Currency\RateProviders;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
+
 /**
  * jsDelivr CDN Rate Provider
- * 
+ *
  * Uses free currency API data delivered via jsDelivr CDN.
  * Data source: @fawazahmed0/currency-api
- * 
+ *
  * Note: This is a good fallback provider as it's free and has no rate limits,
  * but data may not be real-time (updated daily).
- * 
+ *
  * Supports 150+ currencies.
  */
-class JsDelivrProvider extends AbstractRateProvider
+class JsDelivrProvider extends AbstractRateProvider implements HistoricalRateProvider
 {
     protected string $baseCurrency = 'UAH';
     protected string $baseUrl = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1';
@@ -32,6 +34,23 @@ class JsDelivrProvider extends AbstractRateProvider
     {
         $currency = strtolower($this->baseCurrency);
         return "{$this->baseUrl}/currencies/{$currency}.json";
+    }
+
+    /**
+     * Get the API endpoint URL for historical rates as of a specific date.
+     *
+     * Dates are only available from 2024-03-06 onwards; earlier dates return 404,
+     * which is treated as "no rate for that date", not an error.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        $currency = strtolower($this->baseCurrency);
+        $baseUrl = str_replace('@latest', '@' . $date->format('Y-m-d'), $this->baseUrl);
+
+        return "{$baseUrl}/currencies/{$currency}.json";
     }
 
     /**

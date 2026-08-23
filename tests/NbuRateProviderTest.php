@@ -55,4 +55,15 @@ class NbuRateProviderTest extends TestCase
         $this->assertArrayNotHasKey('USD', $rates);
         $this->assertArrayHasKey('EUR', $rates);
     }
+
+    public function test_get_historical_api_url_returns_correct_url()
+    {
+        $provider = new NbuRateProvider();
+        $reflection = new \ReflectionClass($provider);
+        $method = $reflection->getMethod('getHistoricalApiUrl');
+        $method->setAccessible(true);
+
+        $url = $method->invoke($provider, \Illuminate\Support\Carbon::parse('2024-01-15'));
+        $this->assertEquals('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json&date=20240115', $url);
+    }
 }

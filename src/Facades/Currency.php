@@ -6,8 +6,12 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static float convert(float $amount, string $from, string $to, ?string $rateType = null)
+ * @method static float convertAt(float $amount, string $from, string $to, \DateTimeInterface $date, ?string $rateType = null)
  * @method static float|null getRate(string $currency, ?string $rateType = null)
+ * @method static float|null getRateAt(string $currency, \DateTimeInterface $date, ?string $rateType = null)
  * @method static array getRates(?string $rateType = null)
+ * @method static array getRatesAt(\DateTimeInterface $date, ?string $rateType = null)
+ * @method static bool supportsHistoricalRates()
  * @method static array getActiveCurrencies()
  * @method static array getActiveCurrencyCodes()
  * @method static string format(float $amount, string $currency, bool $includeSymbol = true)

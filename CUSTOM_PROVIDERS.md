@@ -58,6 +58,43 @@ Currency::setRateProvider('mybank');
 
 ---
 
+## Adding Historical Rate Support
+
+To let `Currency::convertAt()`/`getRateAt()`/`getRatesAt()` work with your provider, implement
+`HistoricalRateProvider` and override the two methods it needs:
+
+```php
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
+use Fomvasss\Currency\RateProviders\AbstractRateProvider;
+
+class MyBankProvider extends AbstractRateProvider implements HistoricalRateProvider
+{
+    // ...getApiUrl()/parseResponse() as above...
+
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        return 'https://api.mybank.com/exchange-rates?date=' . $date->format('Y-m-d');
+    }
+
+    protected function parseHistoricalResponse($response): array
+    {
+        // Override only if the historical endpoint's response shape differs from
+        // parseResponse(); otherwise it defaults to parseResponse($response).
+        return $this->parseResponse($response);
+    }
+}
+```
+
+Without `implements HistoricalRateProvider`, `Currency::supportsHistoricalRates()` returns
+`false` for your provider and the historical methods throw `LogicException` — same as
+`MonobankRateProvider`, which has no historical archive to query.
+
+Historical rates never fall back to the last-known cache (a rate for another day is worse than
+no rate) and, by default, are cached forever per date — see the "Historical Rates" section in
+the README.
+
+---
+
 ## Practical Examples
 
 ### National Bank of Ukraine (NBU)

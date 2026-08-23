@@ -2,11 +2,13 @@
 
 namespace Fomvasss\Currency\RateProviders;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
+
 /**
  * Exchange Rates API provider (https://exchangeratesapi.io/)
  * Free tier available, supports multiple base currencies.
  */
-class ExchangeRatesApiProvider extends AbstractRateProvider
+class ExchangeRatesApiProvider extends AbstractRateProvider implements HistoricalRateProvider
 {
     protected ?string $apiKey = null;
 
@@ -30,6 +32,23 @@ class ExchangeRatesApiProvider extends AbstractRateProvider
 
         // Using frankfurter.dev as free alternative (no API key required)
         return "https://api.frankfurter.dev/v1/latest?from={$this->baseCurrency}";
+    }
+
+    /**
+     * Get the API endpoint URL for historical rates as of a specific date.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        $formattedDate = $date->format('Y-m-d');
+
+        if ($this->apiKey) {
+            return "https://api.exchangeratesapi.io/v1/{$formattedDate}?access_key={$this->apiKey}&base={$this->baseCurrency}";
+        }
+
+        return "https://api.frankfurter.dev/v1/{$formattedDate}?from={$this->baseCurrency}";
     }
 
     /**
