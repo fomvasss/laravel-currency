@@ -55,24 +55,12 @@ class ProviderManager
     public function createProvider(string $name): RateProvider
     {
         $providers = $this->getAvailableProviders();
-        
+
         if (!isset($providers[$name])) {
             throw new \InvalidArgumentException("Provider '{$name}' is not configured");
         }
 
-        $providerClass = $providers[$name];
-        
-        if (!class_exists($providerClass)) {
-            throw new \InvalidArgumentException("Provider class '{$providerClass}' does not exist");
-        }
-
-        $provider = $this->container->make($providerClass);
-        
-        if (!$provider instanceof RateProvider) {
-            throw new \InvalidArgumentException("Provider class '{$providerClass}' must implement RateProvider interface");
-        }
-
-        return $provider;
+        return $this->makeProvider($providers[$name]);
     }
 
     /**
@@ -85,6 +73,56 @@ class ProviderManager
     {
         $name = $name ?: $this->getDefaultDriver();
         return $this->createProvider($name);
+    }
+
+    /**
+     * Resolve a rate provider from an instance, a configured alias, or a class name.
+     *
+     * @param RateProvider|string $provider
+     * @return RateProvider
+     */
+    public function resolve($provider): RateProvider
+    {
+        if ($provider instanceof RateProvider) {
+            return $provider;
+        }
+
+        if (is_string($provider)) {
+            $providers = $this->getAvailableProviders();
+
+            if (isset($providers[$provider])) {
+                return $this->makeProvider($providers[$provider]);
+            }
+
+            if (class_exists($provider)) {
+                return $this->makeProvider($provider);
+            }
+
+            throw new \InvalidArgumentException("Provider '{$provider}' is not configured and class does not exist");
+        }
+
+        throw new \InvalidArgumentException("Provider must be a RateProvider instance, configured alias, or class name");
+    }
+
+    /**
+     * Instantiate and validate a provider class.
+     *
+     * @param string $providerClass
+     * @return RateProvider
+     */
+    protected function makeProvider(string $providerClass): RateProvider
+    {
+        if (!class_exists($providerClass)) {
+            throw new \InvalidArgumentException("Provider class '{$providerClass}' does not exist");
+        }
+
+        $provider = $this->container->make($providerClass);
+
+        if (!$provider instanceof RateProvider) {
+            throw new \InvalidArgumentException("Provider class '{$providerClass}' must implement RateProvider interface");
+        }
+
+        return $provider;
     }
 
     /**

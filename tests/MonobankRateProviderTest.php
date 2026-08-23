@@ -56,4 +56,48 @@ class MonobankRateProviderTest extends TestCase
         $provider = new MonobankRateProvider();
         $this->assertEquals('UAH', $provider->getBaseCurrency());
     }
+
+    public function test_parse_response_maps_aud_numeric_code()
+    {
+        $provider = new MonobankRateProvider();
+        $reflection = new \ReflectionClass($provider);
+        $method = $reflection->getMethod('parseResponse');
+        $method->setAccessible(true);
+
+        $apiResponse = [
+            [
+                'currencyCodeA' => 36, // AUD
+                'currencyCodeB' => 980, // UAH
+                'date' => 1640000000,
+                'rateBuy' => 27.5,
+                'rateSell' => 28.0,
+            ],
+        ];
+
+        $rates = $method->invoke($provider, $apiResponse);
+
+        $this->assertArrayHasKey('AUD', $rates);
+    }
+
+    public function test_parse_response_skips_zero_rates()
+    {
+        $provider = new MonobankRateProvider();
+        $reflection = new \ReflectionClass($provider);
+        $method = $reflection->getMethod('parseResponse');
+        $method->setAccessible(true);
+
+        $apiResponse = [
+            [
+                'currencyCodeA' => 840, // USD
+                'currencyCodeB' => 980, // UAH
+                'date' => 1640000000,
+                'rateBuy' => 0,
+                'rateSell' => 0,
+            ],
+        ];
+
+        $rates = $method->invoke($provider, $apiResponse);
+
+        $this->assertArrayNotHasKey('USD', $rates);
+    }
 }

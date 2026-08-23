@@ -56,7 +56,8 @@ return [
     // Базова валюта за замовчуванням
     'default' => 'UAH',
 
-    // Провайдер курсів за замовчуванням (ключ з масиву 'providers')
+    // Провайдер курсів за замовчуванням (ключ з масиву 'providers' або повна назва класу).
+    // Невідомий псевдонім/клас кидає InvalidArgumentException під час завантаження.
     'default_provider' => env('CURRENCY_DEFAULT_PROVIDER', 'monobank'),
 
     // Доступні провайдери
@@ -75,6 +76,9 @@ return [
 
     // TTL резервного кешу у секундах — використовується, коли API недоступний (за замовчуванням: 1 день)
     'cache_ttl_fallback' => env('CURRENCY_CACHE_TTL_FALLBACK', 86400),
+
+    // Інтервал повтору в секундах при порожньому результаті — API недоступний і fallback порожній (за замовчуванням: 60)
+    'cache_ttl_empty' => env('CURRENCY_CACHE_TTL_EMPTY', 60),
 
     // Тип курсу за замовчуванням: 'buy', 'sell' або 'average'
     'default_rate_type' => env('CURRENCY_DEFAULT_RATE_TYPE', 'average'),
@@ -134,10 +138,12 @@ FIXER_API_KEY=your_key
 | `nbu`            | `NbuRateProvider`            | 30+            | Ні       | Національний банк України            |
 | `monobank`       | `MonobankRateProvider`       | Декілька       | Ні       | API Монобанку                        |
 | `privatbank`     | `PrivatbankRateProvider`     | EUR, USD       | Ні       | Обмеження API ПриватБанку            |
-| `jsdelivr`       | `JsDelivrProvider`           | 150+           | Ні       | Безкоштовний CDN, оновлення щодня    |
-| `exchangeratesapi` | `ExchangeRatesApiProvider` | Декілька       | Так      | https://exchangeratesapi.io          |
+| `jsdelivr`       | `JsDelivrProvider`           | 150+           | Ні       | Безкоштовний CDN, оновлення щодня. Купівля/продаж — синтетичні: спред ±0.5% (`$spread`) навколо ринкового курсу, перевизначається в нащадку. Без вбудованого статичного fallback: якщо CDN недоступний, `getRates()` повертає порожній масив (якщо немає резервного кешу) |
+| `exchangeratesapi` | `ExchangeRatesApiProvider` | Декілька       | Опційно  | https://exchangeratesapi.io. **Без API-ключа** використовується [frankfurter.dev](https://frankfurter.dev) (тільки валюти ECB) — `UAH` не є валютою ECB і не може бути `baseCurrency` в цьому режимі (`new ExchangeRatesApiProvider(null, 'UAH')` поверне 404); використовуйте `new ExchangeRatesApiProvider(null, 'EUR')` або задайте `exchange_rates_api_key` |
 | `currencyapi`    | `CurrencyApiProvider`        | Декілька       | Так      | https://currencyapi.com (300 запитів/місяць безкоштовно) |
-| `fixer`          | `FixerProvider`              | Декілька       | Так      | https://fixer.io (100 запитів/місяць безкоштовно) |
+| `fixer`          | `FixerProvider`              | Декілька       | Так      | https://fixer.io. **Безкоштовний тариф працює лише по HTTP і `base` фіксований на EUR** — цей провайдер завжди звертається по HTTPS, тому безкоштовний ключ поверне помилку доступу до базової валюти; для HTTPS та/або іншої базової валюти потрібен платний тариф |
+
+> **Octane / Horizon / довгоживучі воркери:** курси завжди читаються через `Cache` (ніколи не мемоізуються на інстансі провайдера), тому довгоживучий воркер отримує свіжі курси одразу після закінчення TTL кешу — без витоку стану між запитами чи тенантами.
 
 ## Базове використання
 
@@ -148,18 +154,20 @@ use Fomvasss\Currency\Facades\Currency;
 $euros = Currency::convert(100, 'USD', 'EUR');
 
 // Отримання курсу
-$rate     = Currency::getRate('USD');           // середній (за замовчуванням)
+$rate     = Currency::getRate('USD');           // null -> config('currency.default_rate_type'), за замовчуванням 'average'
 $buyRate  = Currency::getRate('USD', 'buy');    // купівля
 $sellRate = Currency::getRate('USD', 'sell');   // продаж
 
 // Отримання всіх курсів
-$rates    = Currency::getRates();               // середні
+$rates    = Currency::getRates();               // null -> тип курсу з конфігу
 $rates    = Currency::getRates('all');          // ['USD' => ['buy' => ..., 'sell' => ...], ...]
 
 // Форматування валюти
 $formatted = Currency::format(1234.56, 'USD');         // $ 1,234.56
 $noSymbol  = Currency::format(1234.56, 'USD', false);  // 1,234.56
 ```
+
+`$rateType` (у `convert()`, `getRate()`, `getRates()` та хелпері `currency_rate()`) приймає лише `'buy'`, `'sell'`, `'average'` (і `'all'` для `getRates()`) — інше значення кидає `InvalidArgumentException`.
 
 ## Перемикання провайдерів
 
@@ -194,6 +202,8 @@ $rates = Currency::getRates();
 // Конвертація після зміни бази
 $amount = Currency::convert(100, 'EUR', 'GBP');
 ```
+
+`setBaseCurrency()` вимагає, щоб поточний провайдер мав курс для цієї валюти — інакше `getRates()`/`getRate()`/`convert()` кидають `InvalidArgumentException` (наприклад, `setBaseCurrency('JPY')`, коли активний провайдер не підтримує JPY).
 
 ## Перевірка можливостей провайдера
 

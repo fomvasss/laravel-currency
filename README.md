@@ -56,7 +56,8 @@ return [
     // Default base currency
     'default' => 'UAH',
 
-    // Default rate provider alias (see 'providers' array)
+    // Default rate provider alias (see 'providers' array) or a fully-qualified class name.
+    // An unknown alias/class throws InvalidArgumentException on boot.
     'default_provider' => env('CURRENCY_DEFAULT_PROVIDER', 'monobank'),
 
     // Available providers
@@ -75,6 +76,9 @@ return [
 
     // Fallback cache TTL in seconds — used when primary API is unavailable (default: 1 day)
     'cache_ttl_fallback' => env('CURRENCY_CACHE_TTL_FALLBACK', 86400),
+
+    // Retry interval in seconds for an empty result — API unavailable and no fallback (default: 60)
+    'cache_ttl_empty' => env('CURRENCY_CACHE_TTL_EMPTY', 60),
 
     // Default rate type: 'buy', 'sell', or 'average'
     'default_rate_type' => env('CURRENCY_DEFAULT_RATE_TYPE', 'average'),
@@ -125,10 +129,12 @@ FIXER_API_KEY=your_key
 | `nbu`            | `NbuRateProvider`           | 30+            | No      | National Bank of Ukraine     |
 | `monobank`       | `MonobankRateProvider`      | Multiple       | No      | Monobank API                 |
 | `privatbank`     | `PrivatbankRateProvider`    | EUR, USD only  | No      | PrivatBank API limitation    |
-| `jsdelivr`       | `JsDelivrProvider`          | 150+           | No      | Free CDN, updated daily      |
-| `exchangeratesapi` | `ExchangeRatesApiProvider` | Multiple       | Yes     | https://exchangeratesapi.io  |
+| `jsdelivr`       | `JsDelivrProvider`          | 150+           | No      | Free CDN, updated daily. Buy/sell are synthetic — a ±0.5% spread applied around the mid-market rate (`$spread`, override in a subclass). No API key required, no built-in static fallback: if the CDN is unreachable, `getRates()` returns an empty array unless a fallback cache is already populated |
+| `exchangeratesapi` | `ExchangeRatesApiProvider` | Multiple       | Optional | https://exchangeratesapi.io. **Without an API key** it falls back to [frankfurter.dev](https://frankfurter.dev) (ECB rates only) — `UAH` is not an ECB currency and cannot be used as `baseCurrency` in that mode (`new ExchangeRatesApiProvider(null, 'UAH')` will get 404s); use `new ExchangeRatesApiProvider(null, 'EUR')` or supply `exchange_rates_api_key` |
 | `currencyapi`    | `CurrencyApiProvider`       | Multiple       | Yes     | https://currencyapi.com (300 req/month free) |
-| `fixer`          | `FixerProvider`             | Multiple       | Yes     | https://fixer.io (100 req/month free) |
+| `fixer`          | `FixerProvider`             | Multiple       | Yes     | https://fixer.io. **Free tier is HTTP-only and `base` is locked to EUR** — this provider always requests over HTTPS, so a free-tier key will get a "base currency access restricted" error; a paid plan is required to use HTTPS and/or a non-EUR base |
+
+> **Octane / Horizon / long-running workers:** rates are always read through `Cache` (never memoized on the provider instance), so a long-lived worker process picks up fresh rates as soon as the cache TTL expires — no per-request or per-tenant state leaks between requests.
 
 ## Basic Usage
 
@@ -139,18 +145,20 @@ use Fomvasss\Currency\Facades\Currency;
 $euros = Currency::convert(100, 'USD', 'EUR');
 
 // Get exchange rate
-$usdRate = Currency::getRate('USD');           // average by default
+$usdRate = Currency::getRate('USD');           // null -> uses config('currency.default_rate_type'), default 'average'
 $buyRate  = Currency::getRate('USD', 'buy');
 $sellRate = Currency::getRate('USD', 'sell');
 
 // Get all rates
-$allRates = Currency::getRates();              // average
+$allRates = Currency::getRates();              // null -> config default rate type
 $allRates = Currency::getRates('all');         // ['USD' => ['buy' => ..., 'sell' => ...], ...]
 
 // Format currency
 $formatted = Currency::format(1234.56, 'USD'); // $ 1,234.56
 $noSymbol  = Currency::format(1234.56, 'USD', false); // 1,234.56
 ```
+
+`$rateType` (on `convert()`, `getRate()`, `getRates()`, and the `currency_rate()` helper) only accepts `'buy'`, `'sell'`, `'average'` (and `'all'` for `getRates()`) — anything else throws `InvalidArgumentException`.
 
 ## Switching Rate Providers
 
@@ -185,6 +193,8 @@ $rates = Currency::getRates();
 // Convert after changing base
 $amount = Currency::convert(100, 'EUR', 'GBP');
 ```
+
+`setBaseCurrency()` requires the current provider to have a rate for that currency — `getRates()`/`getRate()`/`convert()` throw `InvalidArgumentException` otherwise (e.g. `setBaseCurrency('JPY')` while the active provider doesn't support JPY).
 
 ## Checking Provider Capabilities
 

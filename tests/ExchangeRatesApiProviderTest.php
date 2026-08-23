@@ -14,7 +14,7 @@ class ExchangeRatesApiProviderTest extends TestCase
         $method->setAccessible(true);
 
         $url = $method->invoke($provider);
-        $this->assertEquals('https://api.frankfurter.app/latest?from=UAH', $url);
+        $this->assertEquals('https://api.frankfurter.dev/v1/latest?from=UAH', $url);
     }
 
     public function test_parse_response_returns_normalized_rates()

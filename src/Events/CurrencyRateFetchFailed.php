@@ -3,11 +3,10 @@
 namespace Fomvasss\Currency\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 class CurrencyRateFetchFailed
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
 
     public string $providerClass;
     public string $errorMessage;

@@ -23,7 +23,6 @@ class PrivatbankRateProvider extends AbstractRateProvider
     protected function getApiUrl(): string
     {
         return 'https://api.privatbank.ua/p24api/pubinfo?exchange&coursid=5';
-                https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5
     }
 
     /**
@@ -43,11 +42,15 @@ class PrivatbankRateProvider extends AbstractRateProvider
             // Currently supports only EUR and USD
             if (isset($item['ccy'], $item['base_ccy']) && $item['base_ccy'] === 'UAH') {
                 $currencyCode = strtoupper($item['ccy']);
+                $buy = (float) ($item['buy'] ?? 0);
+                $sell = (float) ($item['sale'] ?? 0);
 
-                $rates[$currencyCode] = [
-                    'buy' => (float) ($item['buy'] ?? 0),
-                    'sell' => (float) ($item['sale'] ?? 0),
-                ];
+                if ($buy > 0 && $sell > 0) {
+                    $rates[$currencyCode] = [
+                        'buy' => $buy,
+                        'sell' => $sell,
+                    ];
+                }
             }
         }
 

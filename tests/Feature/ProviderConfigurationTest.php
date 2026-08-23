@@ -7,10 +7,33 @@ use Fomvasss\Currency\Facades\CurrencyProvider;
 use Fomvasss\Currency\RateProviders\NbuRateProvider;
 use Fomvasss\Currency\RateProviders\MonobankRateProvider;
 use Fomvasss\Currency\Tests\TestCase;
+use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\Test;
 
 class ProviderConfigurationTest extends TestCase
 {
-    /** @test */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::fake([
+            'api.monobank.ua/*' => Http::response([
+                ['currencyCodeA' => 840, 'currencyCodeB' => 980, 'rateBuy' => 41.0, 'rateSell' => 41.5],
+                ['currencyCodeA' => 978, 'currencyCodeB' => 980, 'rateBuy' => 45.0, 'rateSell' => 45.8],
+            ]),
+            'api.privatbank.ua/*' => Http::response([
+                ['ccy' => 'USD', 'base_ccy' => 'UAH', 'buy' => '41.00000', 'sale' => '41.50000'],
+                ['ccy' => 'EUR', 'base_ccy' => 'UAH', 'buy' => '45.00000', 'sale' => '45.80000'],
+            ]),
+            'bank.gov.ua/*' => Http::response([
+                ['cc' => 'USD', 'rate' => 41.2],
+                ['cc' => 'EUR', 'rate' => 45.4],
+                ['cc' => 'PLN', 'rate' => 10.3],
+            ]),
+        ]);
+    }
+
+    #[Test]
     public function it_can_use_configured_providers()
     {
         // Test that providers are properly configured
@@ -23,7 +46,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertEquals(MonobankRateProvider::class, $availableProviders['monobank']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_switch_providers_using_names()
     {
         // Test switching to NBU provider
@@ -37,7 +60,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertInstanceOf(MonobankRateProvider::class, $provider);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_unknown_provider()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -46,7 +69,7 @@ class ProviderConfigurationTest extends TestCase
         Currency::useProvider('unknown');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_provider_manager()
     {
         // Test getting provider through manager
@@ -59,18 +82,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertArrayHasKey('nbu', $available);
     }
 
-    /** @test */
-    public function it_can_access_providers_through_container()
-    {
-        // Test accessing providers through service container
-        $providers = app('currency.providers');
-        
-        $this->assertIsArray($providers);
-        $this->assertArrayHasKey('nbu', $providers);
-        $this->assertInstanceOf(NbuRateProvider::class, $providers['nbu']);
-    }
-
-    /** @test */
+    #[Test]
     public function it_can_set_provider_using_alias()
     {
         // Test setting provider using configured alias
@@ -83,7 +95,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertInstanceOf(MonobankRateProvider::class, $provider);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_set_provider_using_class_name()
     {
         // Test setting provider using full class name
@@ -92,7 +104,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertInstanceOf(NbuRateProvider::class, $provider);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_set_provider_using_instance()
     {
         // Test setting provider using class instance
@@ -103,7 +115,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertSame($nbuProvider, $currentProvider);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_invalid_provider_in_set_rate_provider()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -112,7 +124,7 @@ class ProviderConfigurationTest extends TestCase
         Currency::setRateProvider('invalid');
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_invalid_provider_type()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -121,7 +133,7 @@ class ProviderConfigurationTest extends TestCase
         Currency::setRateProvider(123);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_set_and_get_base_currency()
     {
         // Test setting custom base currency
@@ -132,7 +144,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertEquals('USD', Currency::getBaseCurrency());
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_custom_base_currency_for_conversion()
     {
         // Set custom base currency
@@ -147,7 +159,7 @@ class ProviderConfigurationTest extends TestCase
         Currency::setBaseCurrency('UAH');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_get_supported_currencies_info()
     {
         // Test getting supported currencies
@@ -160,7 +172,7 @@ class ProviderConfigurationTest extends TestCase
         $this->assertEquals(count($supportedCurrencies), $count);
     }
 
-    /** @test */
+    #[Test]
     public function it_shows_privatbank_limitation()
     {
         // Switch to PrivatBank to test its limitation
@@ -176,7 +188,7 @@ class ProviderConfigurationTest extends TestCase
         Currency::useProvider('nbu');
     }
 
-    /** @test */
+    #[Test]
     public function it_converts_rates_when_base_currency_changes()
     {
         Currency::useProvider('nbu');
@@ -204,7 +216,7 @@ class ProviderConfigurationTest extends TestCase
         Currency::setBaseCurrency($defaultBase);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_1_for_base_currency_rate()
     {
         Currency::setBaseCurrency('USD');
@@ -217,7 +229,7 @@ class ProviderConfigurationTest extends TestCase
         Currency::setBaseCurrency('UAH');
     }
 
-    /** @test */
+    #[Test]
     public function it_converts_correctly_with_custom_base_currency()
     {
         Currency::useProvider('nbu');

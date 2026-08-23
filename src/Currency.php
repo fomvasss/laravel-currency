@@ -9,11 +9,13 @@ class Currency
     protected RateProvider $rateProvider;
     protected array $config;
     protected ?string $baseCurrency = null; // Override for base currency
+    protected ProviderManager $providerManager;
 
-    public function __construct(RateProvider $rateProvider, array $config = [])
+    public function __construct(RateProvider $rateProvider, array $config = [], ?ProviderManager $providerManager = null)
     {
         $this->rateProvider = $rateProvider;
         $this->config = $config;
+        $this->providerManager = $providerManager ?? app('currency.manager');
     }
 
     /**
@@ -27,17 +29,14 @@ class Currency
      */
     public function convert(float $amount, string $from, string $to, ?string $rateType = null): float
     {
-        // Use config default if rate type not specified
-        if ($rateType === null) {
-            $rateType = $this->config['default_rate_type'] ?? 'average';
-        }
+        $rateType = $this->resolveRateType($rateType);
 
         $from = strtoupper($from);
         $to = strtoupper($to);
 
         // Same currency, no conversion needed
         if ($from === $to) {
-            return $amount;
+            return round($amount, $this->getPrecision($to));
         }
 
         $baseCurrency = $this->getBaseCurrency();
@@ -61,6 +60,26 @@ class Currency
         }
 
         return round($amount, $this->getPrecision($to));
+    }
+
+    /**
+     * Resolve rate type: explicit value, config default, or 'average'; validate it's allowed.
+     *
+     * @param string|null $rateType
+     * @param bool $allowAll Whether 'all' is an allowed value (only getRates() supports it)
+     * @return string
+     */
+    protected function resolveRateType(?string $rateType, bool $allowAll = false): string
+    {
+        $rateType = $rateType ?? ($this->config['default_rate_type'] ?? 'average');
+
+        $allowed = $allowAll ? ['buy', 'sell', 'average', 'all'] : ['buy', 'sell', 'average'];
+
+        if (!in_array($rateType, $allowed, true)) {
+            throw new \InvalidArgumentException("Invalid rate type: {$rateType}");
+        }
+
+        return $rateType;
     }
 
     /**
@@ -96,7 +115,6 @@ class Currency
                         'buy' => 1 / $baseRate['sell'],
                         'sell' => 1 / $baseRate['buy'],
                         'average' => 2 / ($baseRate['buy'] + $baseRate['sell']),
-                        default => 2 / ($baseRate['buy'] + $baseRate['sell']),
                     };
                 }
                 return null;
@@ -113,7 +131,6 @@ class Currency
                 'buy' => $rate['buy'] / $baseRate['sell'],
                 'sell' => $rate['sell'] / $baseRate['buy'],
                 'average' => ($rate['buy'] + $rate['sell']) / ($baseRate['buy'] + $baseRate['sell']),
-                default => ($rate['buy'] + $rate['sell']) / ($baseRate['buy'] + $baseRate['sell']),
             };
         }
 
@@ -128,7 +145,6 @@ class Currency
             'buy' => $rate['buy'],
             'sell' => $rate['sell'],
             'average' => ($rate['buy'] + $rate['sell']) / 2,
-            default => ($rate['buy'] + $rate['sell']) / 2,
         };
     }
 
@@ -136,29 +152,35 @@ class Currency
      * Get exchange rate for specific currency relative to base currency.
      *
      * @param string $currency Currency code
-     * @param string $rateType Rate type: 'buy', 'sell', or 'average'
+     * @param string|null $rateType Rate type: 'buy', 'sell', or 'average'. If null, uses config default.
      * @return float|null
      */
-    public function getRate(string $currency, string $rateType = 'average'): ?float
+    public function getRate(string $currency, ?string $rateType = null): ?float
     {
-        return $this->getRateValue(strtoupper($currency), $rateType);
+        return $this->getRateValue(strtoupper($currency), $this->resolveRateType($rateType));
     }
 
     /**
      * Get all exchange rates relative to base currency.
      *
-     * @param string $rateType Rate type: 'buy', 'sell', 'average', or 'all'
+     * @param string|null $rateType Rate type: 'buy', 'sell', 'average', or 'all'. If null, uses config default.
      * @return array
      */
-    public function getRates(string $rateType = 'average'): array
+    public function getRates(?string $rateType = null): array
     {
+        $rateType = $this->resolveRateType($rateType, true);
+
         $rates = $this->rateProvider->getRates();
         $providerBaseCurrency = $this->rateProvider->getBaseCurrency();
         $currentBaseCurrency = $this->getBaseCurrency();
 
         // If custom base currency is set and differs from provider's base currency
         // we need to convert all rates relative to the new base currency
-        if ($currentBaseCurrency !== $providerBaseCurrency && isset($rates[$currentBaseCurrency])) {
+        if ($currentBaseCurrency !== $providerBaseCurrency) {
+            if (!isset($rates[$currentBaseCurrency])) {
+                throw new \InvalidArgumentException("Currency rate not found for: {$currentBaseCurrency}");
+            }
+
             $baseRateData = $rates[$currentBaseCurrency];
             $convertedRates = [];
 
@@ -196,7 +218,6 @@ class Currency
                     'buy' => $rate['buy'],
                     'sell' => $rate['sell'],
                     'average' => ($rate['buy'] + $rate['sell']) / 2,
-                    default => ($rate['buy'] + $rate['sell']) / 2,
                 };
             }
         }
@@ -398,52 +419,9 @@ class Currency
      */
     public function setRateProvider($provider): self
     {
-        if ($provider instanceof RateProvider) {
-            // Direct provider instance
-            $this->rateProvider = $provider;
-            return $this;
-        }
-        
-        if (is_string($provider)) {
-            // Check if it's a configured provider alias
-            $providers = $this->getAvailableProviders();
-            
-            if (isset($providers[$provider])) {
-                // It's a configured alias
-                $providerClass = $providers[$provider];
-                
-                if (!class_exists($providerClass)) {
-                    throw new \InvalidArgumentException("Provider class '{$providerClass}' does not exist");
-                }
-                
-                $providerInstance = app()->make($providerClass);
-                
-                if (!$providerInstance instanceof RateProvider) {
-                    throw new \InvalidArgumentException("Provider class '{$providerClass}' must implement RateProvider interface");
-                }
-                
-                $this->rateProvider = $providerInstance;
-                return $this;
-            }
-            
-            // Try as direct class name
-            if (class_exists($provider)) {
-                $providerInstance = app()->make($provider);
-                
-                if (!$providerInstance instanceof RateProvider) {
-                    throw new \InvalidArgumentException("Class '{$provider}' must implement RateProvider interface");
-                }
-                
-                $this->rateProvider = $providerInstance;
-                return $this;
-            }
-            
-            throw new \InvalidArgumentException("Provider '{$provider}' is not configured and class does not exist");
-        }
-        
-        throw new \InvalidArgumentException("Provider must be a RateProvider instance, configured alias, or class name");
+        $this->rateProvider = $this->providerManager->resolve($provider);
+        return $this;
     }
-
 
     /**
      * Get available providers from config.
@@ -452,7 +430,7 @@ class Currency
      */
     public function getAvailableProviders(): array
     {
-        return $this->config['providers'] ?? [];
+        return $this->providerManager->getAvailableProviders();
     }
 
     /**
@@ -464,25 +442,7 @@ class Currency
      */
     public function useProvider(string $providerName): self
     {
-        $providers = $this->getAvailableProviders();
-        
-        if (!isset($providers[$providerName])) {
-            throw new \InvalidArgumentException("Provider '{$providerName}' is not configured");
-        }
-
-        $providerClass = $providers[$providerName];
-        
-        if (!class_exists($providerClass)) {
-            throw new \InvalidArgumentException("Provider class '{$providerClass}' does not exist");
-        }
-
-        $provider = app()->make($providerClass);
-        
-        if (!$provider instanceof RateProvider) {
-            throw new \InvalidArgumentException("Provider class '{$providerClass}' must implement RateProvider interface");
-        }
-
-        $this->rateProvider = $provider;
+        $this->rateProvider = $this->providerManager->createProvider($providerName);
         return $this;
     }
 }

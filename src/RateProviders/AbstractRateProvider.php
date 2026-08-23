@@ -6,12 +6,12 @@ use Fomvasss\Currency\Contracts\RateProvider;
 use Fomvasss\Currency\Events\CurrencyRateFetchFailed;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 abstract class AbstractRateProvider implements RateProvider
 {
-    protected array $rates = [];
     protected string $baseCurrency = 'UAH';
-    protected int $cacheTtl = 3600; // 1 hour
+    protected ?int $cacheTtl = null;
 
     /**
      * Get the API endpoint URL.
@@ -35,11 +35,7 @@ abstract class AbstractRateProvider implements RateProvider
      */
     public function getRates(): array
     {
-        if (empty($this->rates)) {
-            $this->rates = $this->fetchRates();
-        }
-
-        return $this->rates;
+        return $this->fetchRates();
     }
 
     /**
@@ -104,47 +100,82 @@ abstract class AbstractRateProvider implements RateProvider
     protected function fetchRates(): array
     {
         $cacheKey = $this->getCacheKey();
+
+        $rates = Cache::get($cacheKey);
+
+        if ($rates !== null) {
+            return $rates;
+        }
+
+        $rates = $this->fetchRatesFromApi();
+
+        // An empty result (API down, no fallback) is cached only briefly so the next
+        // request retries soon, but a burst of calls doesn't hammer the API.
+        $ttl = empty($rates) ? config('currency.cache_ttl_empty', 60) : $this->getCacheTtl();
+
+        Cache::put($cacheKey, $rates, $ttl);
+
+        return $rates;
+    }
+
+    /**
+     * Fetch rates from the remote API, falling back to cached/static rates on failure.
+     *
+     * @return array
+     */
+    protected function fetchRatesFromApi(): array
+    {
         $fallbackCacheKey = $this->getCacheKey() . '_fallback';
         $fallbackTtl = config('currency.cache_ttl_fallback', 86400); // 1 day
 
-        return Cache::remember($cacheKey, $this->cacheTtl, function () use ($fallbackCacheKey, $fallbackTtl) {
-            try {
-                $response = Http::timeout(10)->get($this->getApiUrl());
+        try {
+            $response = Http::timeout(10)->get($this->getApiUrl());
 
-                if ($response->successful()) {
-                    $rates = $this->parseResponse($response->json());
-                    
-                    // Store successful rates in long-term fallback cache
-                    if (!empty($rates)) {
-                        Cache::put($fallbackCacheKey, $rates, $fallbackTtl);
-                    }
-                    
-                    return $rates;
+            if ($response->successful()) {
+                $json = $response->json();
+
+                if (!is_array($json)) {
+                    event(new CurrencyRateFetchFailed(
+                        static::class,
+                        'API returned a non-array response',
+                        false
+                    ));
+
+                    return $this->tryFallbackCache($fallbackCacheKey);
                 }
 
-                // API returned error status
-                event(new CurrencyRateFetchFailed(
-                    static::class,
-                    'API returned error status: ' . $response->status(),
-                    false
-                ));
+                $rates = $this->parseResponse($json);
 
-                // Try fallback cache if API returns error
-                return $this->tryFallbackCache($fallbackCacheKey);
-            } catch (\Exception $e) {
-                \Log::error('Currency rate provider error: ' . $e->getMessage());
-                
-                // Dispatch event for exception
-                event(new CurrencyRateFetchFailed(
-                    static::class,
-                    $e->getMessage(),
-                    false
-                ));
-                
-                // Try fallback cache on exception
-                return $this->tryFallbackCache($fallbackCacheKey);
+                // Store successful rates in long-term fallback cache
+                if (!empty($rates)) {
+                    Cache::put($fallbackCacheKey, $rates, $fallbackTtl);
+                }
+
+                return $rates;
             }
-        });
+
+            // API returned error status
+            event(new CurrencyRateFetchFailed(
+                static::class,
+                'API returned error status: ' . $response->status(),
+                false
+            ));
+
+            // Try fallback cache if API returns error
+            return $this->tryFallbackCache($fallbackCacheKey);
+        } catch (\Throwable $e) {
+            Log::error('Currency rate provider error: ' . $e->getMessage());
+
+            // Dispatch event for exception
+            event(new CurrencyRateFetchFailed(
+                static::class,
+                $e->getMessage(),
+                false
+            ));
+
+            // Try fallback cache on exception
+            return $this->tryFallbackCache($fallbackCacheKey);
+        }
     }
 
     /**
@@ -159,7 +190,7 @@ abstract class AbstractRateProvider implements RateProvider
         $fallbackRates = Cache::get($fallbackCacheKey);
         
         if ($fallbackRates && !empty($fallbackRates)) {
-            \Log::warning('Using fallback cached rates for ' . class_basename($this));
+            Log::warning('Using fallback cached rates for ' . class_basename($this));
             
             // Dispatch event that we're using fallback cache
             event(new CurrencyRateFetchFailed(
@@ -173,7 +204,7 @@ abstract class AbstractRateProvider implements RateProvider
         }
         
         // Last resort - static fallback rates
-        \Log::error('No cached rates available, using static fallback for ' . class_basename($this));
+        Log::error('No cached rates available, using static fallback for ' . class_basename($this));
         
         $staticRates = $this->getFallbackRates();
         
@@ -206,6 +237,16 @@ abstract class AbstractRateProvider implements RateProvider
     protected function getFallbackRates(): array
     {
         return [];
+    }
+
+    /**
+     * Get cache TTL in seconds.
+     *
+     * @return int
+     */
+    protected function getCacheTtl(): int
+    {
+        return $this->cacheTtl ?? config('currency.cache_ttl', 3600);
     }
 
     /**

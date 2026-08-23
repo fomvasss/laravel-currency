@@ -9,6 +9,7 @@ namespace Fomvasss\Currency\RateProviders;
 class FixerProvider extends AbstractRateProvider
 {
     protected ?string $apiKey = null;
+    protected string $apiUrl = 'https://data.fixer.io/api/latest';
 
     public function __construct(?string $apiKey = null, string $baseCurrency = 'UAH')
     {
@@ -23,7 +24,7 @@ class FixerProvider extends AbstractRateProvider
      */
     protected function getApiUrl(): string
     {
-        return "https://api.fixer.io/latest?access_key={$this->apiKey}&base={$this->baseCurrency}";
+        return "{$this->apiUrl}?access_key={$this->apiKey}&base={$this->baseCurrency}";
     }
 
     /**

@@ -52,19 +52,4 @@ class CurrencyApiProvider extends AbstractRateProvider
 
         return $rates;
     }
-
-    /**
-     * Get fallback rates when API fails.
-     *
-     * @return array
-     */
-    protected function getFallbackRates(): array
-    {
-        // Try without API key using free endpoint (very limited)
-        if ($this->apiKey) {
-            return [];
-        }
-
-        return [];
-    }
 }

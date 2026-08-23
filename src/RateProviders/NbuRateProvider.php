@@ -11,9 +11,13 @@ class NbuRateProvider extends AbstractRateProvider
 
     protected function parseResponse($response): array
     {
-        $rates = ['UAH' => ['buy' => 1.0, 'sell' => 1.0]];
+        $rates = [];
 
         foreach ($response as $item) {
+            if (!isset($item['cc'], $item['rate'])) {
+                continue;
+            }
+
             $code = $item['cc'];
             $rate = (float) $item['rate'];
 

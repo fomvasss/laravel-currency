@@ -30,8 +30,7 @@ class BladeDirectives
 
         // @currencySymbol('USD')
         Blade::directive('currencySymbol', function ($expression) {
-            $code = "app('currency')->getCurrencyConfig({$expression})['symbol'] ?? {$expression}";
-            return "<?php echo {$code}; ?>";
+            return "<?php echo currency_symbol({$expression}); ?>";
         });
     }
 }

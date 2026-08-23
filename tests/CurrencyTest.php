@@ -261,4 +261,56 @@ class CurrencyTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->currency->convert(100, 'XYZ', 'USD');
     }
+
+    public function test_convert_same_currency_rounds_to_precision()
+    {
+        $result = $this->currency->convert(100.129, 'USD', 'USD');
+        $this->assertEquals(100.13, $result);
+    }
+
+    public function test_get_rate_uses_config_default_rate_type_when_null()
+    {
+        $config = config('currency');
+        $config['default_rate_type'] = 'buy';
+        $currency = new Currency($this->provider, $config);
+
+        $this->assertEquals(40.00, $currency->getRate('USD'));
+    }
+
+    public function test_get_rates_uses_config_default_rate_type_when_null()
+    {
+        $config = config('currency');
+        $config['default_rate_type'] = 'buy';
+        $currency = new Currency($this->provider, $config);
+
+        $this->assertEquals(40.00, $currency->getRates()['USD']);
+    }
+
+    public function test_get_rate_throws_exception_for_invalid_rate_type()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->currency->getRate('USD', 'invalid');
+    }
+
+    public function test_get_rates_throws_exception_for_invalid_rate_type()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->currency->getRates('invalid');
+    }
+
+    public function test_convert_throws_exception_for_invalid_rate_type()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->currency->convert(100, 'USD', 'EUR', 'invalid');
+    }
+
+    public function test_get_rates_throws_exception_for_unresolvable_custom_base_currency()
+    {
+        $this->currency->setBaseCurrency('XYZ');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Currency rate not found for: XYZ');
+
+        $this->currency->getRates();
+    }
 }

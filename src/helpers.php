@@ -36,10 +36,10 @@ if (! function_exists('currency_rate')) {
      * Get exchange rate for currency.
      *
      * @param string $currency
-     * @param string $rateType
+     * @param string|null $rateType
      * @return float|null
      */
-    function currency_rate(string $currency, string $rateType = 'average'): ?float
+    function currency_rate(string $currency, ?string $rateType = null): ?float
     {
         return app('currency')->getRate($currency, $rateType);
     }

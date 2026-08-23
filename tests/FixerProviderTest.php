@@ -14,7 +14,7 @@ class FixerProviderTest extends TestCase
         $method->setAccessible(true);
 
         $url = $method->invoke($provider);
-        $this->assertEquals('https://api.fixer.io/latest?access_key=test_key&base=UAH', $url);
+        $this->assertEquals('https://data.fixer.io/api/latest?access_key=test_key&base=UAH', $url);
     }
 
     public function test_parse_response_returns_normalized_rates()

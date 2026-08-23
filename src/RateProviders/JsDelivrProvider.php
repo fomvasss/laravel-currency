@@ -19,6 +19,11 @@ class JsDelivrProvider extends AbstractRateProvider
     protected string $baseUrl = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1';
 
     /**
+     * Synthetic buy/sell spread applied around the mid-market rate (jsDelivr has no buy/sell data).
+     */
+    protected float $spread = 0.01; // 1% spread
+
+    /**
      * Get the API endpoint URL.
      *
      * @return string
@@ -63,34 +68,20 @@ class JsDelivrProvider extends AbstractRateProvider
                 continue;
             }
 
+            if ((float) $rate <= 0) {
+                continue;
+            }
+
             // jsDelivr API returns inverse rates (UAH to other currencies)
             // We need to convert to: 1 foreign currency = X base currency
             $inverseRate = 1 / (float) $rate;
 
-            // Since we don't have buy/sell spread, use the same rate with small spread
-            $spread = 0.01; // 1% spread
             $rates[$code] = [
-                'buy' => $inverseRate * (1 - $spread / 2),
-                'sell' => $inverseRate * (1 + $spread / 2),
+                'buy' => $inverseRate * (1 - $this->spread / 2),
+                'sell' => $inverseRate * (1 + $this->spread / 2),
             ];
         }
 
         return $rates;
-    }
-
-    /**
-     * Get fallback rates when API fails.
-     * 
-     * Provides basic rates for major currencies.
-     *
-     * @return array
-     */
-    protected function getFallbackRates(): array
-    {
-        return [
-            'USD' => ['buy' => 41.0, 'sell' => 42.0],
-            'EUR' => ['buy' => 45.0, 'sell' => 46.0],
-            'GBP' => ['buy' => 52.0, 'sell' => 53.0],
-        ];
     }
 }

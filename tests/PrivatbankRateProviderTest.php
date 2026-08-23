@@ -53,4 +53,25 @@ class PrivatbankRateProviderTest extends TestCase
         $provider = new PrivatbankRateProvider();
         $this->assertEquals('UAH', $provider->getBaseCurrency());
     }
+
+    public function test_parse_response_skips_zero_rates()
+    {
+        $provider = new PrivatbankRateProvider();
+        $reflection = new \ReflectionClass($provider);
+        $method = $reflection->getMethod('parseResponse');
+        $method->setAccessible(true);
+
+        $apiResponse = [
+            [
+                'ccy' => 'USD',
+                'base_ccy' => 'UAH',
+                'buy' => '0',
+                'sale' => '0',
+            ],
+        ];
+
+        $rates = $method->invoke($provider, $apiResponse);
+
+        $this->assertArrayNotHasKey('USD', $rates);
+    }
 }

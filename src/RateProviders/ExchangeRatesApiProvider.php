@@ -28,8 +28,8 @@ class ExchangeRatesApiProvider extends AbstractRateProvider
             return "https://api.exchangeratesapi.io/v1/latest?access_key={$this->apiKey}&base={$this->baseCurrency}";
         }
 
-        // Using frankfurter.app as free alternative (no API key required)
-        return "https://api.frankfurter.app/latest?from={$this->baseCurrency}";
+        // Using frankfurter.dev as free alternative (no API key required)
+        return "https://api.frankfurter.dev/v1/latest?from={$this->baseCurrency}";
     }
 
     /**
