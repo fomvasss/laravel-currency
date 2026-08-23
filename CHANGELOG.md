@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## 2.6.0 - 2026-08-23
 
 ### Added
 - `cache_ttl_empty` config option (`CURRENCY_CACHE_TTL_EMPTY`, default 60s) — how long an empty result (API unavailable, no fallback rates) is kept before the next request retries the API.
@@ -29,6 +29,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 - `currency.providers` container binding — resolve providers via `useProvider()`/`setRateProvider()` or the `currency.manager` service.
+
+## 2.5.1 - 2026-05-27
+
+### Changed
+- Relaxed composer version constraints (`^12` instead of `^12.0` etc.).
+
+## 2.5.0 - 2026-05-03
+
+### Added
+- `getRateProvider()` alias for `getProvider()`.
+- Currencies with `'active' => false` in config are excluded from `getActiveCurrencies()`/`getActiveCurrencyCodes()`.
+
+### Fixed
+- `jsdelivr` provider now uses `UAH` as base currency, consistent with the other providers (was `EUR`).
+
+## 2.4.0 - 2026-05-02
+
+### Changed
+- README rewritten in English, Ukrainian README (`README_UK.md`) added, `CUSTOM_PROVIDERS.md` rewritten in English.
+
+## 2.3.0 - 2026-05-02
+
+### Added
+- Laravel 13 support.
+
+## 2.2.0 - 2026-01-25
+
+### Added
+- Long-term fallback cache: the last successful rates are stored for `cache_ttl_fallback` (`CURRENCY_CACHE_TTL_FALLBACK`, default 1 day) and served when the API is unavailable.
+- `clearCache()` on `Currency` and on rate providers (also added to the `RateProvider` interface).
+- `CurrencyRateFetchFailed` event, dispatched on API failure and when fallback rates are used — for custom alerting/monitoring.
+
+## 2.1.0 - 2026-01-23
+
+### Added
+- `default_precision` config option (`CURRENCY_DEFAULT_PRECISION`, default 2) used when a currency has no own `precision`; `getDefaultPrecision()` method.
+
+### Security
+- Minimum PHP version raised to 8.1.
 
 ## 2.0.0 - 2026-01-21
 
