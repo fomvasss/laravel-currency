@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.7.2 - 2026-10-07
+
+### Fixed
+- `format()` used 2 decimals for a currency without its own `precision` instead of `default_precision`, so it disagreed with `convert()` and `getPrecision()`
+
 ## 2.7.1 - 2026-10-07
 
 ### Fixed

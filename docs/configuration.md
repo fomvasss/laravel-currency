@@ -14,7 +14,7 @@ All settings live in `config/currency.php` (publish it with `php artisan vendor:
 | `cache_ttl_empty` | `CURRENCY_CACHE_TTL_EMPTY` | `60` | Seconds an empty result (API failed, no fallback) is cached before the next retry |
 | `cache_ttl_historical` | `CURRENCY_CACHE_TTL_HISTORICAL` | `null` | Seconds historical (per-date) rates are cached; `null` caches them forever |
 | `default_rate_type` | `CURRENCY_DEFAULT_RATE_TYPE` | `'average'` | Rate type used when a method gets `$rateType = null`: `buy`, `sell` or `average` |
-| `default_precision` | `CURRENCY_DEFAULT_PRECISION` | `2` | Decimal places for `convert()` results and `getPrecision()` when the currency has no own `precision` |
+| `default_precision` | `CURRENCY_DEFAULT_PRECISION` | `2` | Decimal places for `convert()`, `format()` and `getPrecision()` when the currency has no own `precision` |
 | `exchange_rates_api_key` | `EXCHANGE_RATES_API_KEY` | `null` | Key for `exchangeratesapi`; without it the provider uses frankfurter.dev |
 | `currencyapi_key` | `CURRENCYAPI_KEY` | `null` | Key for `currencyapi` (required) |
 | `fixer_api_key` | `FIXER_API_KEY` | `null` | Key for `fixer` (required) |
@@ -68,9 +68,6 @@ How the four interact — [Caching & failures](usage/caching.md).
 
 An invalid `default_rate_type` is not checked at boot; every call that falls back to it throws `InvalidArgumentException: Invalid rate type`.
 
-> [!WARNING]
-> `default_precision` does **not** affect [`format()`](usage/formatting.md): a currency without its own `precision` is formatted with 2 decimals regardless of this setting.
-
 ## Currencies
 
 ```php
@@ -93,7 +90,7 @@ An invalid `default_rate_type` is not checked at boot; every call that falls bac
 | `code` | informational | — |
 | `title` | `currency:rates --currency=X` | `N/A` |
 | `symbol` | `format()`, `currency_symbol()`, `@currencySymbol` | the currency code |
-| `precision` | `format()`, `convert()` rounding, `getPrecision()` | `format()`: `2`; `convert()`/`getPrecision()`: `default_precision` |
+| `precision` | `format()`, `convert()` rounding, `getPrecision()` | `default_precision` |
 | `thousandSeparator` | `format()` | `,` |
 | `decimalSeparator` | `format()` | `.` |
 | `symbolPlacement` | `format()`: `before` or `after` | `before` |

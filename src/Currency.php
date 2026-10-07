@@ -404,7 +404,7 @@ class Currency
         $currency = strtoupper($currency);
         $currencyConfig = $this->getCurrencyConfig($currency);
 
-        $precision = $currencyConfig['precision'] ?? 2;
+        $precision = $this->getPrecision($currency);
         $thousandSeparator = $currencyConfig['thousandSeparator'] ?? ',';
         $decimalSeparator = $currencyConfig['decimalSeparator'] ?? '.';
         $symbol = $currencyConfig['symbol'] ?? $currency;
