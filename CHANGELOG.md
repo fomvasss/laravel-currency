@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.7.5 - 2026-10-07
+
+### Fixed
+- Two providers with the same short class name shared one cache — for example an app provider extending `NbuRateProvider` under the same name served the parent's cached rates. Providers outside the package are now cached under their full class name; built-in providers keep their keys
+
 ## 2.7.4 - 2026-10-07
 
 ### Fixed

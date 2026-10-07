@@ -115,6 +115,20 @@ class AbstractRateProviderTest extends TestCase
         $this->assertNull(Cache::get('currency_rates_MonobankRateProvider_fallback'));
     }
 
+    public function test_provider_with_a_built_in_basename_has_its_own_cache()
+    {
+        Http::fake([
+            'api.monobank.ua/*' => Http::response($this->successResponse(), 200),
+        ]);
+
+        (new MonobankRateProvider())->getRates();
+        (new \Fomvasss\Currency\Tests\Fixtures\MonobankRateProvider())->getRates();
+
+        Http::assertSentCount(2);
+        $this->assertNotNull(Cache::get('currency_rates_MonobankRateProvider'));
+        $this->assertNotNull(Cache::get('currency_rates_Fomvasss_Currency_Tests_Fixtures_MonobankRateProvider'));
+    }
+
     public function test_cache_ttl_defaults_from_config()
     {
         config(['currency.cache_ttl' => 123]);

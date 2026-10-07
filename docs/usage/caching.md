@@ -6,7 +6,7 @@ Rates are always read through Laravel's default cache store; a provider calls it
 
 On `getRates()` (and everything built on it — `convert()`, `getRate()`, `isSupported()`, …):
 
-1. Read `currency_rates_{ProviderClass}` from the cache. Found → return it.
+1. Read `currency_rates_{ProviderClass}` from the cache. Found → return it. `{ProviderClass}` is the short class name for built-in providers (`NbuRateProvider`) and the full name with `_` instead of `\` for any other (`App_Currency_NbuRateProvider`).
 2. Otherwise call the API (`Http::timeout(10)`).
 3. **Success** with rates → store them in the cache for `cache_ttl` (1 h) and in the fallback key `currency_rates_{ProviderClass}_fallback` for `cache_ttl_fallback` (1 day).
 4. **Failure** (exception, non-2xx status, non-JSON body) → use the fallback key if it has rates, otherwise the provider's static `getFallbackRates()` (empty for every built-in provider).

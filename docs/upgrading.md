@@ -8,6 +8,10 @@ After an upgrade, compare your published `config/currency.php` with the package'
 php artisan vendor:publish --tag=currency-config --force   # overwrites; back up your file first
 ```
 
+## 2.7.5
+
+Providers outside the package (your own, or subclasses of built-in ones) are cached under their full class name: `currency_rates_App_Currency_MyProvider` instead of `currency_rates_MyProvider`. Their rates, fallback copy and historical rates are fetched again once after the upgrade; if the API is down right then, there is no fallback copy yet. Built-in providers keep their keys.
+
 ## 2.7.4
 
 - Historical rates are cached under new keys (`currency_rates_{ProviderClass}_{generation}_{Y-m-d}`), so every date is fetched once more after the upgrade. The old `currency_rates_{ProviderClass}_{Y-m-d}` keys are no longer read; on a store without eviction remove them by hand.
