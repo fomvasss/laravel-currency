@@ -32,7 +32,7 @@
 | Property | Type | Description |
 |---|---|---|
 | `providerClass` | `string` | FQCN of the provider |
-| `errorMessage` | `string` | Exception message, `API returned error status: N`, `API returned a non-array response`, `Using fallback cached rates` or `No cached rates available, using static fallback` |
+| `errorMessage` | `string` | Exception message, `API returned error status: N`, `API returned a non-array response`, `API returned no rates`, `Using fallback cached rates` or `No cached rates available, using static fallback` |
 | `usingFallback` | `bool` | `true` when fallback (cached or static) rates are being served |
 | `fallbackRates` | `?array` | The rates served instead; `[]` when the static fallback is empty |
 | `date` | `?DateTimeInterface` | The requested date for historical fetches, else `null` |

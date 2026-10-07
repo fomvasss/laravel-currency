@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.7.6 - 2026-10-07
+
+### Fixed
+- A 2xx response without rates (Fixer reports an invalid key as HTTP 200 with `"success": false`) returned empty rates with no `CurrencyRateFetchFailed` event and without trying the fallback cache. It is handled as a failure now
+
 ## 2.7.5 - 2026-10-07
 
 ### Fixed
