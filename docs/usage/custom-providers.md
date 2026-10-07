@@ -347,7 +347,7 @@ Static rates are cached under the main key for `cache_ttl_empty`, like fallback 
 
 | Method | Default | Override to |
 |---|---|---|
-| `getCacheKey()` | `currency_rates_{class basename}` | separate caches of two instances with different settings (e.g. different base currency) |
+| `getCacheKey()` | `currency_rates_{full class name, `\` → `_`}` (built-in providers: `currency_rates_{class basename}`) | separate caches of two instances with different settings (e.g. different base currency) |
 | `getHistoricalCacheKey($date)` | `{cache key}_{generation}_{Y-m-d}` | change the per-date key |
 | `getBaseCurrency()` | `$baseCurrency` | compute the base dynamically |
 

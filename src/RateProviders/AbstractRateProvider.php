@@ -400,7 +400,13 @@ abstract class AbstractRateProvider implements RateProvider
      */
     protected function getCacheKey(): string
     {
-        return 'currency_rates_' . class_basename($this);
+        // built-in providers keep the short name; any other class gets its full name, so an app
+        // provider (or a subclass) named like a built-in one doesn't share its cache
+        $name = str_starts_with(static::class, __NAMESPACE__ . '\\')
+            ? class_basename($this)
+            : str_replace('\\', '_', static::class);
+
+        return 'currency_rates_' . $name;
     }
 
     /**
