@@ -80,6 +80,30 @@ class AbstractRateProviderTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_fallback_rates_are_cached_briefly_and_retried_after_expiry()
+    {
+        config(['currency.cache_ttl_empty' => 60, 'currency.cache_ttl' => 3600]);
+
+        Cache::put('currency_rates_MonobankRateProvider_fallback', [
+            'USD' => ['buy' => 26.0, 'sell' => 26.5],
+        ], 86400);
+
+        Http::fake([
+            'api.monobank.ua/*' => Http::sequence()
+                ->push([], 500)
+                ->push($this->successResponse(), 200),
+        ]);
+
+        $provider = new MonobankRateProvider();
+
+        $this->assertEquals(26.0, $provider->getRates()['USD']['buy']);
+
+        $this->travel(61)->seconds();
+
+        $this->assertEquals(27.5, $provider->getRates()['USD']['buy']);
+        Http::assertSentCount(2);
+    }
+
     public function test_clear_cache_removes_both_keys()
     {
         Cache::put('currency_rates_MonobankRateProvider', ['USD' => ['buy' => 1, 'sell' => 1]], 3600);

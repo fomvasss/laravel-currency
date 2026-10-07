@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.7.3 - 2026-10-07
+
+### Fixed
+- Fallback and static rates served while the API was failing were cached for the full `cache_ttl`, so stale rates stayed for up to an hour after the API recovered. They are now cached for `cache_ttl_empty` and the API is retried after it
+
 ## 2.7.2 - 2026-10-07
 
 ### Fixed

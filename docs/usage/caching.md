@@ -10,11 +10,11 @@ On `getRates()` (and everything built on it — `convert()`, `getRate()`, `isSup
 2. Otherwise call the API (`Http::timeout(10)`).
 3. **Success** with rates → store them in the cache for `cache_ttl` (1 h) and in the fallback key `currency_rates_{ProviderClass}_fallback` for `cache_ttl_fallback` (1 day).
 4. **Failure** (exception, non-2xx status, non-JSON body) → use the fallback key if it has rates, otherwise the provider's static `getFallbackRates()` (empty for every built-in provider).
-5. Whatever came out of 3–4 is stored under the main key: for `cache_ttl` if non-empty, for `cache_ttl_empty` (60 s) if empty.
+5. Whatever came out of 3–4 is stored under the main key: fetched rates for `cache_ttl`; fallback, static or empty rates for `cache_ttl_empty` (60 s).
 
 Consequences:
 
-- When the API is down but the fallback cache is warm, rates up to `cache_ttl_fallback` old are served and **cached again for the full `cache_ttl`** — after the API recovers, stale rates stay for up to another hour.
+- When the API is down but the fallback cache is warm, rates up to `cache_ttl_fallback` old are served. The API is retried every `cache_ttl_empty`, so fresh rates come back within a minute of its recovery. Before 2.7.3 the fallback rates were cached for the full `cache_ttl`.
 - When nothing is cached at all, rates are empty: `convert()` throws, `getRate()` returns `null`. The next API attempt happens after `cache_ttl_empty`, so a burst of requests doesn't hammer a dead API.
 - A 2xx response that parses to no rates is not treated as a failure: no event, no fallback cache — the empty result is cached for `cache_ttl_empty`. Fixer, for example, reports errors (invalid key, plan restrictions) as HTTP 200 with `"success": false`.
 
@@ -80,7 +80,7 @@ Event::listen(function (CurrencyRateFetchFailed $event) {
 });
 ```
 
-Because the main key caches the failure result, the events fire once per `cache_ttl_empty` (no rates) or once per `cache_ttl` (fallback rates) — not on every call.
+Because the main key caches the failure result, the events fire once per `cache_ttl_empty` while the API is failing — not on every call.
 
 The package also logs: `Log::error` on an exception and when no fallback rates exist, `Log::warning` when serving fallback rates and on any historical failure.
 
