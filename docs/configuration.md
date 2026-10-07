@@ -23,9 +23,6 @@ All settings live in `config/currency.php` (publish it with `php artisan vendor:
 > [!NOTE]
 > `default_provider` is resolved lazily — the first time the `currency` service is used (a facade call, a helper, a command). An unknown alias or a class that doesn't exist throws `InvalidArgumentException` at that point, not at boot.
 
-> [!WARNING]
-> Leave `CURRENCY_CACHE_TTL_HISTORICAL` out of `.env` (or set it to `null`) to cache historical rates forever. An empty value (`CURRENCY_CACHE_TTL_HISTORICAL=`) is the string `''`, which Laravel treats as a zero TTL — historical rates are then not cached at all.
-
 ## Providers
 
 ```php
