@@ -2,7 +2,7 @@
 
 ## Helpers
 
-Global functions, autoloaded with the package. Each one calls the `currency` singleton, so they follow the current provider and base currency.
+Global functions, autoloaded with the package. Each one calls the `currency` binding, so they follow the current provider and base currency.
 
 ```php
 currency_convert(100, 'USD', 'EUR');                 // Currency::convert()

@@ -42,13 +42,14 @@ class ServiceProvider extends BaseServiceProvider
             'currency'
         );
 
-        // Register ProviderManager
-        $this->app->singleton('currency.manager', function ($app) {
+        // scoped, not singleton: Octane and queue workers drop these after every request/job, so
+        // setBaseCurrency()/useProvider()/setRateProvider() and config changes don't leak into
+        // the next one
+        $this->app->scoped('currency.manager', function ($app) {
             return new ProviderManager($app);
         });
 
-        // Register main Currency service
-        $this->app->singleton('currency', function ($app) {
+        $this->app->scoped('currency', function ($app) {
             $config = $app['config']['currency'];
             $manager = $app['currency.manager'];
             $provider = $manager->resolve($config['default_provider'] ?? 'monobank');

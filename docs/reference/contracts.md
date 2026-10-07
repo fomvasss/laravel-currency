@@ -41,7 +41,7 @@ When and how often it fires — [Caching & failures](../usage/caching.md#the-cur
 
 ## ProviderManager
 
-`Fomvasss\Currency\ProviderManager`, the `currency.manager` singleton; facade `Fomvasss\Currency\Facades\CurrencyProvider` (not auto-aliased).
+`Fomvasss\Currency\ProviderManager`, the scoped `currency.manager` binding; facade `Fomvasss\Currency\Facades\CurrencyProvider` (not auto-aliased).
 
 | Method | Returns | Description |
 |---|---|---|
@@ -55,14 +55,14 @@ When and how often it fires — [Caching & failures](../usage/caching.md#the-cur
 Instances are created with the container (`$container->make($class)`); a class that doesn't exist or doesn't implement `RateProvider` throws `InvalidArgumentException`. Every call creates a new instance.
 
 > [!NOTE]
-> The manager copies `config('currency')` when it is first resolved. Changing `currency.providers` or `currency.default_provider` with `config([...])` after that has no effect on it; the same goes for the `Currency` singleton, which keeps its own copy of the config (base currency, precision, currencies, default rate type).
+> The manager copies `config('currency')` when it is resolved, once per request or job. Changing `currency.providers` or `currency.default_provider` with `config([...])` after that has no effect until the next request or job; the same goes for `Currency`, which keeps its own copy of the config (base currency, precision, currencies, default rate type).
 
 ## Container bindings
 
 | Abstract | Concrete |
 |---|---|
-| `currency` (alias `Fomvasss\Currency\Currency`) | singleton `Currency` with `default_provider` |
-| `currency.manager` | singleton `ProviderManager` |
+| `currency` (alias `Fomvasss\Currency\Currency`) | scoped `Currency` with `default_provider` (fresh per request/job) |
+| `currency.manager` | scoped `ProviderManager` |
 
 ## Service provider
 

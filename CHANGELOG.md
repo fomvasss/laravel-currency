@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.8.1 - 2026-10-07
+
+### Fixed
+- `currency` and `currency.manager` were singletons, so under Octane or in a queue worker `setBaseCurrency()`, `useProvider()` and `setRateProvider()` stayed in effect for every later request or job of that worker, and config changes were never picked up. Both are now scoped bindings, fresh for each request and job
+
 ## 2.8.0 - 2026-10-07
 
 ### Added

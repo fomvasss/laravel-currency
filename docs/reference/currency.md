@@ -1,6 +1,6 @@
 # Currency facade
 
-`Fomvasss\Currency\Facades\Currency` → the `currency` singleton, an instance of `Fomvasss\Currency\Currency` (also bound under that class name, so it can be injected). The facade is aliased as `Currency` by auto-discovery.
+`Fomvasss\Currency\Facades\Currency` → the scoped `currency` binding, an instance of `Fomvasss\Currency\Currency` (also bound under that class name, so it can be injected). The facade is aliased as `Currency` by auto-discovery.
 
 Currency codes are case-insensitive everywhere. `$rateType` is `'buy'`, `'sell'`, `'average'`, or `null` for `config('currency.default_rate_type')`; `'all'` is accepted only by `getRates()`/`getRatesAt()`. An invalid type throws `InvalidArgumentException`.
 
@@ -35,7 +35,7 @@ Details — [Historical rates](../usage/historical-rates.md).
 | Method | Returns | Description |
 |---|---|---|
 | `getBaseCurrency()` | `string` | Runtime override, else `config('currency.default')`, else the provider's base |
-| `setBaseCurrency(string $currency)` | `Currency` | Override the base currency on the singleton |
+| `setBaseCurrency(string $currency)` | `Currency` | Override the base currency on the shared instance |
 
 Details — [Base currency](../usage/base-currency.md).
 
@@ -50,7 +50,7 @@ Details — [Base currency](../usage/base-currency.md).
 | `getAvailableProviders()` | `array` | `config('currency.providers')` |
 | `clearCache()` | `void` | Forget the current provider's cached, fallback and historical rates |
 
-`useProvider()`, `setRateProvider()` and `setBaseCurrency()` mutate the shared singleton — see the warning in [Rate providers](../usage/providers.md#switching-provider).
+`useProvider()`, `setRateProvider()` and `setBaseCurrency()` mutate the shared instance — see the warning in [Rate providers](../usage/providers.md#switching-provider).
 
 ## Formatting and currency config
 
