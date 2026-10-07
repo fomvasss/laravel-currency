@@ -82,6 +82,55 @@ class HistoricalRatesTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_empty_cache_ttl_historical_caches_forever()
+    {
+        config(['currency.cache_ttl_historical' => '']);
+
+        Http::fake([
+            'bank.gov.ua/*' => Http::response($this->successResponse(), 200),
+        ]);
+
+        $provider = new NbuRateProvider();
+        $provider->getRatesAt(Carbon::parse('2024-01-15'));
+        $provider->getRatesAt(Carbon::parse('2024-01-15'));
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_todays_rates_are_cached_only_for_cache_ttl()
+    {
+        config(['currency.cache_ttl' => 3600]);
+
+        Http::fake([
+            'bank.gov.ua/*' => Http::response($this->successResponse(), 200),
+        ]);
+
+        $this->travelTo(Carbon::parse('2024-01-15 09:00'));
+
+        $provider = new NbuRateProvider();
+        $provider->getRatesAt(Carbon::parse('2024-01-15'));
+
+        $this->travel(3601)->seconds();
+
+        $provider->getRatesAt(Carbon::parse('2024-01-15'));
+
+        Http::assertSentCount(2);
+    }
+
+    public function test_clear_cache_drops_historical_rates()
+    {
+        Http::fake([
+            'bank.gov.ua/*' => Http::response($this->successResponse(), 200),
+        ]);
+
+        $provider = new NbuRateProvider();
+        $provider->getRatesAt(Carbon::parse('2024-01-15'));
+        $provider->clearCache();
+        $provider->getRatesAt(Carbon::parse('2024-01-15'));
+
+        Http::assertSentCount(2);
+    }
+
     public function test_error_status_returns_empty_array_and_dispatches_event_without_fallback()
     {
         Event::fake([CurrencyRateFetchFailed::class]);
@@ -168,7 +217,6 @@ class HistoricalRatesTest extends TestCase
         Http::assertSentCount(2);
 
         $this->assertNotNull(Cache::get('currency_rates_NbuRateProvider'));
-        $this->assertNotNull(Cache::get('currency_rates_NbuRateProvider_2024-01-15'));
     }
 
     public function test_get_rate_at_returns_single_currency()

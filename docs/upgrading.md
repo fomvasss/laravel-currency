@@ -8,6 +8,12 @@ After an upgrade, compare your published `config/currency.php` with the package'
 php artisan vendor:publish --tag=currency-config --force   # overwrites; back up your file first
 ```
 
+## 2.7.4
+
+- Historical rates are cached under new keys (`currency_rates_{ProviderClass}_{generation}_{Y-m-d}`), so every date is fetched once more after the upgrade. The old `currency_rates_{ProviderClass}_{Y-m-d}` keys are no longer read; on a store without eviction remove them by hand.
+- `clearCache()` and `currency:rates --refresh` now drop historical rates too.
+- An empty `CURRENCY_CACHE_TTL_HISTORICAL=` caches forever, as `null` does. Before, it disabled the historical cache.
+
 ## 2.7.1
 
 `exchangeratesapi`, `currencyapi` and `fixer` stored rates in the opposite direction (1 USD = 0.024 UAH), so `convert(100, 'USD', 'UAH')` returned `2.4` instead of `4150`. They now store "UAH per 1 unit of the currency", like the other providers.

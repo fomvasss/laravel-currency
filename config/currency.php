@@ -45,8 +45,8 @@ return [
     'cache_ttl_empty' => env('CURRENCY_CACHE_TTL_EMPTY', 60),
 
     /**
-     * Cache TTL in seconds for historical (per-date) rates. null = cache forever
-     * (rates for a past date never change).
+     * Cache TTL in seconds for rates of a past date. null or empty = cache forever
+     * (rates for a past date never change). Today's and future dates use cache_ttl.
      */
     'cache_ttl_historical' => env('CURRENCY_CACHE_TTL_HISTORICAL'),
 

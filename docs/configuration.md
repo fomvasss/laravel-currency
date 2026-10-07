@@ -12,7 +12,7 @@ All settings live in `config/currency.php` (publish it with `php artisan vendor:
 | `cache_ttl` | `CURRENCY_CACHE_TTL` | `3600` | Seconds a fetched set of current rates is cached |
 | `cache_ttl_fallback` | `CURRENCY_CACHE_TTL_FALLBACK` | `86400` | Seconds the last successful rates are kept as a fallback for when the API fails |
 | `cache_ttl_empty` | `CURRENCY_CACHE_TTL_EMPTY` | `60` | Seconds a failed fetch is cached before the next retry — empty rates, or fallback/static rates served instead |
-| `cache_ttl_historical` | `CURRENCY_CACHE_TTL_HISTORICAL` | `null` | Seconds historical (per-date) rates are cached; `null` caches them forever |
+| `cache_ttl_historical` | `CURRENCY_CACHE_TTL_HISTORICAL` | `null` | Seconds rates for a past date are cached; `null` or empty caches them forever. Today's and future dates use `cache_ttl` |
 | `default_rate_type` | `CURRENCY_DEFAULT_RATE_TYPE` | `'average'` | Rate type used when a method gets `$rateType = null`: `buy`, `sell` or `average` |
 | `default_precision` | `CURRENCY_DEFAULT_PRECISION` | `2` | Decimal places for `convert()`, `format()` and `getPrecision()` when the currency has no own `precision` |
 | `exchange_rates_api_key` | `EXCHANGE_RATES_API_KEY` | `null` | Key for `exchangeratesapi`; without it the provider uses frankfurter.dev |

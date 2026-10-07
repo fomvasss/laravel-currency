@@ -12,7 +12,7 @@
 | `getBaseCurrency()` | `string` | The currency the rates are expressed in |
 | `getSupportedCurrencies()` | `array` | Codes from `getRates()` |
 | `getSupportedCurrenciesCount()` | `int` | Their count |
-| `clearCache()` | `void` | Forget cached rates (current and fallback) |
+| `clearCache()` | `void` | Forget cached rates (current, fallback and historical) |
 
 ## HistoricalRateProvider
 

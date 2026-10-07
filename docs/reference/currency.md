@@ -48,7 +48,7 @@ Details — [Base currency](../usage/base-currency.md).
 | `getProvider()` | `RateProvider` | Current provider instance |
 | `getRateProvider()` | `RateProvider` | Alias of `getProvider()` |
 | `getAvailableProviders()` | `array` | `config('currency.providers')` |
-| `clearCache()` | `void` | Forget the current provider's cached and fallback rates |
+| `clearCache()` | `void` | Forget the current provider's cached, fallback and historical rates |
 
 `useProvider()`, `setRateProvider()` and `setBaseCurrency()` mutate the shared singleton — see the warning in [Rate providers](../usage/providers.md#switching-provider).
 

@@ -7,6 +7,7 @@ use Fomvasss\Currency\Events\CurrencyRateFetchFailed;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 abstract class AbstractRateProvider implements RateProvider
 {
@@ -296,9 +297,18 @@ abstract class AbstractRateProvider implements RateProvider
             return $rates;
         }
 
+        // today's (or a future) rate may still change: the bank hasn't published it yet, or the
+        // API answers with the previous day's rate
+        if ($date->format('Y-m-d') >= now()->format('Y-m-d')) {
+            Cache::put($cacheKey, $rates, $this->getCacheTtl());
+
+            return $rates;
+        }
+
         $ttl = config('currency.cache_ttl_historical');
 
-        if ($ttl === null) {
+        // an empty CURRENCY_CACHE_TTL_HISTORICAL= is '' — means "forever", not TTL 0
+        if ($ttl === null || $ttl === '') {
             Cache::forever($cacheKey, $rates);
         } else {
             Cache::put($cacheKey, $rates, $ttl);
@@ -376,7 +386,11 @@ abstract class AbstractRateProvider implements RateProvider
      */
     protected function getHistoricalCacheKey(\DateTimeInterface $date): string
     {
-        return $this->getCacheKey() . '_' . $date->format('Y-m-d');
+        // the generation lets clearCache() drop every per-date key at once — a cache store can't
+        // list keys by prefix
+        $generation = Cache::rememberForever($this->getCacheKey() . '_historical_generation', fn () => Str::random(8));
+
+        return $this->getCacheKey() . '_' . $generation . '_' . $date->format('Y-m-d');
     }
 
     /**
@@ -422,7 +436,7 @@ abstract class AbstractRateProvider implements RateProvider
     }
 
     /**
-     * Clear both regular and fallback cache for this provider.
+     * Clear the regular, fallback and historical (per-date) cache for this provider.
      *
      * @return void
      */
@@ -430,5 +444,6 @@ abstract class AbstractRateProvider implements RateProvider
     {
         Cache::forget($this->getCacheKey());
         Cache::forget($this->getCacheKey() . '_fallback');
+        Cache::forget($this->getCacheKey() . '_historical_generation');
     }
 }

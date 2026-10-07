@@ -38,7 +38,7 @@ Cached per date, forever by default, without fallback — see [Historical rates]
 ```php
 use Fomvasss\Currency\Facades\CurrencyProvider;
 
-Currency::clearCache();                         // current provider: main + fallback key
+Currency::clearCache();                         // current provider: main, fallback and per-date keys
 CurrencyProvider::provider('nbu')->clearCache(); // a specific provider
 ```
 
@@ -47,7 +47,7 @@ php artisan currency:rates --refresh
 php artisan currency:rates --provider=nbu --refresh
 ```
 
-`clearCache()` removes the fallback rates as well — if the API is down right after, there is nothing to fall back to. Historical per-date keys are not touched.
+`clearCache()` removes the fallback rates as well — if the API is down right after, there is nothing to fall back to. Historical per-date rates are dropped too.
 
 ## The CurrencyRateFetchFailed event
 
