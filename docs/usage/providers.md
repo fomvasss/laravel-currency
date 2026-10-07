@@ -37,8 +37,8 @@ Currency::getProvider();            // current RateProvider instance (alias: get
 Currency::getAvailableProviders();  // config('currency.providers')
 ```
 
-> [!WARNING]
-> `Currency` is a singleton. `useProvider()`, `setRateProvider()` and `setBaseCurrency()` change it for the rest of the process — every later call in the same request, job or command sees the switched provider. Under Octane, or in a queue worker, that is **every later request or job handled by the same worker**. Switch back when you're done, or use a separate instance:
+> [!NOTE]
+> `useProvider()`, `setRateProvider()` and `setBaseCurrency()` change the shared `Currency` instance — every later call in the same request, job or command sees the switched provider. It is a scoped binding (since 2.8.1; a singleton before), so the next request or job under Octane or a queue worker starts fresh. A long-running command keeps the switch. Switch back when you're done, or use a separate instance:
 >
 > ```php
 > use Fomvasss\Currency\Currency;
@@ -49,7 +49,7 @@ Currency::getAvailableProviders();  // config('currency.providers')
 
 ## Using a provider directly
 
-The `CurrencyProvider` facade (`currency.manager`, a `ProviderManager`) builds provider instances without touching the `Currency` singleton. It is not auto-aliased — import it by class name:
+The `CurrencyProvider` facade (`currency.manager`, a `ProviderManager`) builds provider instances without touching the shared `Currency` instance. It is not auto-aliased — import it by class name:
 
 ```php
 use Fomvasss\Currency\Facades\CurrencyProvider;

@@ -45,8 +45,8 @@ The provider must have a rate for the new base currency:
 
 `setBaseCurrency()` itself doesn't check anything — the error shows up on the next call. The same applies to `default` in config: with `default => 'EUR'` and a provider that doesn't return EUR, every call fails.
 
-> [!WARNING]
-> `setBaseCurrency()` changes the `Currency` singleton. In a long-running process (Octane, queue workers) the override stays for every later request or job in that worker. Reset it with `Currency::setBaseCurrency(config('currency.default'))`, or use a separate `Currency` instance — see [Rate providers](providers.md#switching-provider).
+> [!NOTE]
+> `setBaseCurrency()` changes the shared `Currency` instance for the rest of the request, job or command. Since 2.8.1 it is a scoped binding: Octane and queue workers start every request and job with a fresh one. Within one request, reset it with `Currency::setBaseCurrency(config('currency.default'))`, or use a separate `Currency` instance — see [Rate providers](providers.md#switching-provider).
 
 ## Base currency vs. formatting
 

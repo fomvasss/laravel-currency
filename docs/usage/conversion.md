@@ -4,7 +4,7 @@
 use Fomvasss\Currency\Facades\Currency;
 ```
 
-The facade resolves the `currency` singleton (`Fomvasss\Currency\Currency`), so you can also inject `Fomvasss\Currency\Currency` or call `app('currency')`.
+The facade resolves the `currency` binding (`Fomvasss\Currency\Currency`), so you can also inject `Fomvasss\Currency\Currency` or call `app('currency')`.
 
 ## How rates are expressed
 
