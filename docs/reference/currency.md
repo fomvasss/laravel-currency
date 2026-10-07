@@ -23,9 +23,9 @@ All throw `LogicException` if the provider doesn't implement `HistoricalRateProv
 
 | Method | Returns | Description |
 |---|---|---|
-| `convertAt(float $amount, string $from, string $to, DateTimeInterface $date, ?string $rateType = null)` | `float` | `convert()` with rates as of `$date`. Missing rate → `InvalidArgumentException` with the date in the message |
-| `getRateAt(string $currency, DateTimeInterface $date, ?string $rateType = null)` | `?float` | `getRate()` as of `$date` |
-| `getRatesAt(DateTimeInterface $date, ?string $rateType = null)` | `array` | `getRates()` as of `$date` |
+| `convertAt(float $amount, string $from, string $to, DateTimeInterface\|string $date, ?string $rateType = null)` | `float` | `convert()` with rates as of `$date`. Missing rate → `InvalidArgumentException` with the date in the message |
+| `getRateAt(string $currency, DateTimeInterface\|string $date, ?string $rateType = null)` | `?float` | `getRate()` as of `$date` |
+| `getRatesAt(DateTimeInterface\|string $date, ?string $rateType = null)` | `array` | `getRates()` as of `$date`. In all three `*At` methods a string date is parsed with `Carbon::parse()` |
 | `supportsHistoricalRates()` | `bool` | Whether the current provider implements `HistoricalRateProvider` |
 
 Details — [Historical rates](../usage/historical-rates.md).

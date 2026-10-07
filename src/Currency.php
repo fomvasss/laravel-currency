@@ -69,12 +69,14 @@ class Currency
      * @param float $amount Amount to convert
      * @param string $from Source currency code
      * @param string $to Target currency code
-     * @param \DateTimeInterface $date
+     * @param \DateTimeInterface|string $date A date object or any string Carbon::parse() accepts
      * @param string|null $rateType Rate type: 'buy', 'sell', or 'average'. If null, uses config default.
      * @return float Converted amount
      */
-    public function convertAt(float $amount, string $from, string $to, \DateTimeInterface $date, ?string $rateType = null): float
+    public function convertAt(float $amount, string $from, string $to, \DateTimeInterface|string $date, ?string $rateType = null): float
     {
+        $date = $this->toDate($date);
+
         $this->assertSupportsHistoricalRates();
 
         $rateType = $this->resolveRateType($rateType);
@@ -251,12 +253,14 @@ class Currency
      * Get exchange rate for specific currency relative to base currency, as of a specific date.
      *
      * @param string $currency Currency code
-     * @param \DateTimeInterface $date
+     * @param \DateTimeInterface|string $date A date object or any string Carbon::parse() accepts
      * @param string|null $rateType Rate type: 'buy', 'sell', or 'average'. If null, uses config default.
      * @return float|null
      */
-    public function getRateAt(string $currency, \DateTimeInterface $date, ?string $rateType = null): ?float
+    public function getRateAt(string $currency, \DateTimeInterface|string $date, ?string $rateType = null): ?float
     {
+        $date = $this->toDate($date);
+
         $this->assertSupportsHistoricalRates();
 
         $currency = strtoupper($currency);
@@ -287,12 +291,14 @@ class Currency
     /**
      * Get all exchange rates relative to base currency, as of a specific date.
      *
-     * @param \DateTimeInterface $date
+     * @param \DateTimeInterface|string $date A date object or any string Carbon::parse() accepts
      * @param string|null $rateType Rate type: 'buy', 'sell', 'average', or 'all'. If null, uses config default.
      * @return array
      */
-    public function getRatesAt(\DateTimeInterface $date, ?string $rateType = null): array
+    public function getRatesAt(\DateTimeInterface|string $date, ?string $rateType = null): array
     {
+        $date = $this->toDate($date);
+
         $this->assertSupportsHistoricalRates();
 
         $rateType = $this->resolveRateType($rateType, true);
@@ -597,6 +603,11 @@ class Currency
     public function supportsHistoricalRates(): bool
     {
         return $this->rateProvider instanceof HistoricalRateProvider;
+    }
+
+    protected function toDate(\DateTimeInterface|string $date): \DateTimeInterface
+    {
+        return is_string($date) ? \Illuminate\Support\Carbon::parse($date) : $date;
     }
 
     /**

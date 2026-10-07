@@ -17,9 +17,10 @@ Currency::getRatesAt($date, 'all');                   // ['USD' => ['buy' => ...
 Currency::supportsHistoricalRates();                  // does the current provider support it
 ```
 
-The methods take a `DateTimeInterface` — passing a string throws a `TypeError`. Only the `currency_convert_at()` helper accepts a string (parsed with `Carbon::parse()`):
+The date is a `DateTimeInterface` or a string, parsed with `Carbon::parse()` (since 2.8; before, only `currency_convert_at()` accepted a string):
 
 ```php
+Currency::convertAt(100, 'USD', 'UAH', '2024-01-15');
 currency_convert_at(100, 'USD', 'UAH', '2024-01-15');
 ```
 
