@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.7.4 - 2026-10-07
+
+### Fixed
+- Historical rates for today (or a future date) were cached forever, so a rate requested before the bank published it stayed wrong. They are now cached for `cache_ttl`
+- An empty `CURRENCY_CACHE_TTL_HISTORICAL=` disabled the historical cache (TTL 0); it now means "forever", like `null`
+- `clearCache()` and `currency:rates --refresh` did not drop historical rates. They do now. The per-date cache key changed, so each date is fetched once more after upgrading
+
 ## 2.7.3 - 2026-10-07
 
 ### Fixed

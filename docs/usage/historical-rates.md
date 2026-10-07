@@ -39,9 +39,6 @@ They behave like `convert()` / `getRate()` / `getRates()`, including rate types,
 | `fixer` | yes | Requires a key |
 | `monobank` | **no** | No archive. The `*At` methods throw `LogicException: MonobankRateProvider does not support historical rates` |
 
-> [!WARNING]
-> The rate-direction issue of `exchangeratesapi`, `currencyapi` and `fixer` ([Rate providers](providers.md#built-in-providers)) applies to historical rates as well.
-
 Check support before calling when the provider can change at runtime:
 
 ```php
@@ -54,14 +51,12 @@ The `currency:convert` and `currency:rates` commands accept `--date=`, see [Arti
 
 ## Caching
 
-- Each date is cached under its own key: `currency_rates_{ProviderClass}_{Y-m-d}`.
-- A successful result is cached **forever** by default (`cache_ttl_historical = null`) — a past rate doesn't change. Set `CURRENCY_CACHE_TTL_HISTORICAL` (seconds) to expire it.
+- Each date is cached under its own key: `currency_rates_{ProviderClass}_{generation}_{Y-m-d}`. The generation is a random string kept under `currency_rates_{ProviderClass}_historical_generation`.
+- A successful result for a past date is cached **forever** by default (`cache_ttl_historical = null`, or an empty `CURRENCY_CACHE_TTL_HISTORICAL=`) — a past rate doesn't change. Set `CURRENCY_CACHE_TTL_HISTORICAL` (seconds) to expire it.
+- Today's and future dates are cached for `cache_ttl`: the bank may not have published the rate yet, or the API answers with the previous day's one.
 - An empty result (network error, error status, 404, or a response without rates) is cached for `cache_ttl_empty` (60 s).
 - There is **no fallback cache**: a rate for another day is worse than no rate, so a failed fetch returns no rates and the conversion throws.
-- `clearCache()` / `currency:rates --refresh` don't remove historical keys — use `Cache::forget('currency_rates_NbuRateProvider_2024-01-15')`.
-
-> [!WARNING]
-> Today's date is cached forever too. If you request today's rate before the bank publishes it (or the API answers with yesterday's rate for today), that answer is kept permanently. Query past dates only, or set `cache_ttl_historical`.
+- `clearCache()` / `currency:rates --refresh` drop the historical keys too: they forget the generation, so every date is fetched again. The old per-date entries stay in the store until it evicts them.
 
 ## Bulk backfill
 

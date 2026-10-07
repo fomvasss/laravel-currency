@@ -22,7 +22,7 @@ php artisan currency:rates --refresh
 | `--provider=` | Config alias or class name (`setRateProvider()`); an invalid one prints `Invalid provider: X` and exits with 1 |
 | `--currency=` | Show one currency as a property table (code, title and symbol from config, buy, sell, average) |
 | `--date=` | Historical rates for this date, parsed by `Carbon::parse()`. Exits with 1 if the provider doesn't support historical rates |
-| `--refresh` | Clear the provider's current and fallback cache before fetching (not historical keys) |
+| `--refresh` | Clear the provider's current, fallback and historical cache before fetching |
 
 Without `--currency` it prints a table of all rates (buy, sell, average to 4 decimals) and the total count, or `No rates available.` when the provider returned nothing. Rates are relative to the base currency (`default`), recalculated if it differs from the provider's base.
 
