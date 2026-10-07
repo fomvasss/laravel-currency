@@ -43,7 +43,7 @@ class MyBankProvider extends AbstractRateProvider
 What `parseResponse()` must return:
 
 - keys — **upper-case** ISO codes (`getRate()` looks them up upper-cased)
-- values — `['buy' => float, 'sell' => float]`: how many units of `$baseCurrency` one unit of the currency costs (`'USD' => ['buy' => 41.3, 'sell' => 41.7]` for a UAH base). If the API gives the inverse (1 UAH = 0.024 USD), invert it — see [below](#inverting-a-providers-rates)
+- values — `['buy' => float, 'sell' => float]`: how many units of `$baseCurrency` one unit of the currency costs (`'USD' => ['buy' => 41.3, 'sell' => 41.7]` for a UAH base). If the API gives the inverse (1 UAH = 0.024 USD), store `1 / $value`
 - no entry for the base currency itself, no zero rates (`convert()` divides by them)
 
 `$response` is the decoded JSON array (`$response->json()`); a non-array body is treated as a failure before `parseResponse()` is called.
@@ -241,41 +241,6 @@ CURRENCY_API_KEY=your_api_key_here
 
 > [!WARNING]
 > Don't override `fetchRates()` with `Cache::remember($key, $this->cacheTtl, ...)`: `$cacheTtl` is `null` unless set, and a `null` TTL makes `Cache::remember()` store the rates **forever**. Use `$this->getCacheTtl()` if you really need to replace `fetchRates()`.
-
-### Inverting a provider's rates
-
-Use this when an API returns "units of the currency per 1 base unit" (1 UAH = 0.024 USD). The built-in `exchangeratesapi`, `currencyapi` and `fixer` providers currently store such values without inverting them (see [Rate providers](providers.md#built-in-providers)); a subclass fixes it for both current and historical rates:
-
-```php
-// app/Services/Currency/ExchangeRatesApiInverted.php
-namespace App\Services\Currency;
-
-use Fomvasss\Currency\RateProviders\ExchangeRatesApiProvider;
-
-class ExchangeRatesApiInverted extends ExchangeRatesApiProvider
-{
-    protected function parseResponse($response): array
-    {
-        $rates = [];
-        foreach (parent::parseResponse($response) as $code => $rate) {
-            if ($rate['buy'] > 0 && $rate['sell'] > 0) {
-                $rates[$code] = ['buy' => 1 / $rate['sell'], 'sell' => 1 / $rate['buy']];
-            }
-        }
-        return $rates;
-    }
-}
-```
-
-```php
-// config/currency.php
-'providers' => [
-    // ...
-    'exchangeratesapi' => \App\Services\Currency\ExchangeRatesApiInverted::class,
-],
-```
-
-The class name differs from the original, so the cache key differs too — no stale, non-inverted rates are read back.
 
 ### Multi-source provider with fallback
 

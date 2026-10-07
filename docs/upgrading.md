@@ -8,6 +8,13 @@ After an upgrade, compare your published `config/currency.php` with the package'
 php artisan vendor:publish --tag=currency-config --force   # overwrites; back up your file first
 ```
 
+## 2.7.1
+
+`exchangeratesapi`, `currencyapi` and `fixer` stored rates in the opposite direction (1 USD = 0.024 UAH), so `convert(100, 'USD', 'UAH')` returned `2.4` instead of `4150`. They now store "UAH per 1 unit of the currency", like the other providers.
+
+- Inverted rates already in the cache are served until they expire — the current ones for `cache_ttl`, the fallback copy for `cache_ttl_fallback`, and historical ones forever (default `cache_ttl_historical = null`). After deploying, remove the keys starting with `currency_rates_ExchangeRatesApiProvider`, `currency_rates_CurrencyApiProvider`, `currency_rates_FixerProvider`, or run `php artisan cache:clear` if the store holds nothing else valuable. `currency:rates --refresh` is not enough: it does not touch per-date keys.
+- If you worked around the bug with a subclass that inverts the rates, remove it, otherwise the rates get inverted twice.
+
 ## 2.7
 
 - New historical rates API (`convertAt()`, `getRateAt()`, `getRatesAt()`, `supportsHistoricalRates()`, `currency_convert_at()`), `--date=` on both commands, `cache_ttl_historical` config key. Nothing to change unless you have custom providers:

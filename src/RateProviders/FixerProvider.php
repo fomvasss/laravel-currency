@@ -53,7 +53,12 @@ class FixerProvider extends AbstractRateProvider implements HistoricalRateProvid
         if (isset($response['success']) && $response['success'] === true) {
             if (isset($response['rates']) && is_array($response['rates'])) {
                 foreach ($response['rates'] as $currency => $rate) {
-                    $rateValue = (float) $rate;
+                    if ((float) $rate <= 0) {
+                        continue;
+                    }
+
+                    // Fixer returns foreign units per 1 base unit; we store base units per 1 foreign unit
+                    $rateValue = 1 / (float) $rate;
 
                     // Fixer provides only mid-market rate
                     $rates[strtoupper($currency)] = [

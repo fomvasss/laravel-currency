@@ -12,9 +12,6 @@ All built-in providers live in `Fomvasss\Currency\RateProviders`, extend `Abstra
 | `currencyapi` | `CurrencyApiProvider` | yes | `(?string $apiKey = null, string $baseCurrency = 'UAH')` |
 | `fixer` | `FixerProvider` | yes | `(?string $apiKey = null, string $baseCurrency = 'UAH')` |
 
-> [!WARNING]
-> `exchangeratesapi`, `currencyapi` and `fixer` store the API's "currency per 1 base unit" values as is, while `Currency` expects "base per 1 currency unit" — conversions with them are inverted. See [Rate providers](../usage/providers.md#built-in-providers) and the [workaround](../usage/custom-providers.md#inverting-a-providers-rates).
-
 ## monobank
 
 - URL: `https://api.monobank.ua/bank/currency`

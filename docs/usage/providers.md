@@ -16,9 +16,6 @@ A provider fetches rates from one API and returns them against its own base curr
 
 Base currency of every built-in provider is `UAH`. Per-provider details, URLs and limitations — [Providers reference](../reference/providers.md).
 
-> [!WARNING]
-> **`exchangeratesapi`, `currencyapi` and `fixer` return rates in the opposite direction** to what `Currency` expects. These APIs answer "how much of the currency for 1 unit of the base" (1 UAH = 0.024 USD), and the providers store that number as is, while `Currency` treats a rate as "how much of the base for 1 unit of the currency" (1 USD = 41.5 UAH). With these providers `convert(100, 'USD', 'UAH')` returns `2.4` instead of `4150`, and `getRate()` returns the inverted rate. `nbu`, `monobank`, `privatbank` and `jsdelivr` are not affected (jsDelivr inverts the API value itself). Until this is fixed in the package, use the affected providers through a subclass that inverts the rates — see [Custom providers](custom-providers.md#inverting-a-providers-rates).
-
 > [!NOTE]
 > `exchangeratesapi` without a key uses frankfurter.dev, which only knows ECB currencies — `UAH` is not one of them, and the provider's base is `UAH`, so every request fails. Set `EXCHANGE_RATES_API_KEY`, or rebind the provider with an ECB base currency (below). Fixer's free plan allows only HTTP and `base=EUR`; the provider always calls `https://data.fixer.io` with `base=UAH`, so a free key gets an access error.
 

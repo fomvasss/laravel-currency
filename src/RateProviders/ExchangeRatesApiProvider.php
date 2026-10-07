@@ -63,11 +63,15 @@ class ExchangeRatesApiProvider extends AbstractRateProvider implements Historica
 
         if (isset($response['rates']) && is_array($response['rates'])) {
             foreach ($response['rates'] as $currency => $rate) {
-                // For international API, we typically only have mid-market rate
-                // So we use the same rate for buy and sell
+                if ((float) $rate <= 0) {
+                    continue;
+                }
+
+                // The API returns foreign units per 1 base unit; we store base units per 1 foreign unit.
+                // Mid-market rate only, so buy and sell are the same
                 $rates[strtoupper($currency)] = [
-                    'buy' => (float) $rate,
-                    'sell' => (float) $rate,
+                    'buy' => 1 / (float) $rate,
+                    'sell' => 1 / (float) $rate,
                 ];
             }
         }

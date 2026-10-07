@@ -39,8 +39,25 @@ class ExchangeRatesApiProviderTest extends TestCase
         $this->assertIsArray($rates);
         $this->assertArrayHasKey('USD', $rates);
         $this->assertArrayHasKey('EUR', $rates);
-        $this->assertEquals(0.0270, $rates['USD']['buy']);
-        $this->assertEquals(0.0270, $rates['USD']['sell']);
+        $this->assertEqualsWithDelta(1 / 0.0270, $rates['USD']['buy'], 0.0001);
+        $this->assertEqualsWithDelta(1 / 0.0270, $rates['USD']['sell'], 0.0001);
+    }
+
+    public function test_convert_uses_base_units_per_foreign_unit()
+    {
+        config(['currency.exchange_rates_api_key' => 'test_key']);
+        \Illuminate\Support\Facades\Http::fake([
+            'api.exchangeratesapi.io/*' => \Illuminate\Support\Facades\Http::response([
+                'success' => true,
+                'base' => 'UAH',
+                'rates' => ['USD' => 0.025, 'EUR' => 0.02],
+            ]),
+        ]);
+
+        \Fomvasss\Currency\Facades\Currency::setRateProvider('exchangeratesapi');
+
+        $this->assertEquals(4000.0, \Fomvasss\Currency\Facades\Currency::convert(100, 'USD', 'UAH'));
+        $this->assertEquals(125.0, \Fomvasss\Currency\Facades\Currency::convert(100, 'EUR', 'USD'));
     }
 
     public function test_supports_custom_base_currency()

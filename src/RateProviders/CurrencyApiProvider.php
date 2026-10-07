@@ -51,8 +51,9 @@ class CurrencyApiProvider extends AbstractRateProvider implements HistoricalRate
 
         if (isset($response['data']) && is_array($response['data'])) {
             foreach ($response['data'] as $currency => $data) {
-                if (isset($data['value'])) {
-                    $rate = (float) $data['value'];
+                if (isset($data['value']) && (float) $data['value'] > 0) {
+                    // CurrencyAPI returns foreign units per 1 base unit; we store base units per 1 foreign unit
+                    $rate = 1 / (float) $data['value'];
 
                     // CurrencyAPI provides only mid-market rate
                     $rates[strtoupper($currency)] = [
