@@ -14,7 +14,7 @@ class FixerProviderTest extends TestCase
         $method->setAccessible(true);
 
         $url = $method->invoke($provider);
-        $this->assertEquals('https://api.fixer.io/latest?access_key=test_key&base=UAH', $url);
+        $this->assertEquals('https://data.fixer.io/api/latest?access_key=test_key&base=UAH', $url);
     }
 
     public function test_parse_response_returns_normalized_rates()
@@ -41,8 +41,8 @@ class FixerProviderTest extends TestCase
         $this->assertIsArray($rates);
         $this->assertArrayHasKey('USD', $rates);
         $this->assertArrayHasKey('EUR', $rates);
-        $this->assertEquals(0.025, $rates['USD']['buy']);
-        $this->assertEquals(0.025, $rates['USD']['sell']);
+        $this->assertEqualsWithDelta(40.0, $rates['USD']['buy'], 0.0001);
+        $this->assertEqualsWithDelta(40.0, $rates['USD']['sell'], 0.0001);
     }
 
     public function test_parse_response_handles_failed_request()

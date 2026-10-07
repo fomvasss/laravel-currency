@@ -1,13 +1,14 @@
 <?php
 
-namespace Tests\Unit;
+namespace Fomvasss\Currency\Tests\Unit;
 
 use Fomvasss\Currency\RateProviders\JsDelivrProvider;
-use Tests\TestCase;
+use Fomvasss\Currency\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class JsDelivrProviderTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_can_fetch_rates_from_jsdelivr()
     {
         $provider = new JsDelivrProvider();
@@ -26,7 +27,7 @@ class JsDelivrProviderTest extends TestCase
         $this->assertArrayHasKey('EUR', $rates);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_proper_rate_structure()
     {
         $provider = new JsDelivrProvider();
@@ -43,7 +44,7 @@ class JsDelivrProviderTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_multiple_currencies()
     {
         $provider = new JsDelivrProvider();
@@ -57,22 +58,59 @@ class JsDelivrProviderTest extends TestCase
         $this->assertGreaterThan(50, $supportedCount);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_uah_as_base_currency()
     {
         $provider = new JsDelivrProvider();
         $this->assertEquals('UAH', $provider->getBaseCurrency());
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_fallback_rates_on_error()
     {
         $provider = new JsDelivrProvider();
-        
+
         // Test fallback mechanism by checking if major currencies exist
         $rates = $provider->getRates();
-        
+
         // Even on error, should return some data (fallback)
         $this->assertIsArray($rates);
+    }
+
+    #[Test]
+    public function it_skips_zero_rates_in_parse_response()
+    {
+        $provider = new JsDelivrProvider();
+        $reflection = new \ReflectionClass($provider);
+        $method = $reflection->getMethod('parseResponse');
+        $method->setAccessible(true);
+
+        $apiResponse = [
+            'uah' => [
+                'usd' => 0,
+                'eur' => 0.021,
+            ],
+        ];
+
+        $rates = $method->invoke($provider, $apiResponse);
+
+        $this->assertArrayNotHasKey('USD', $rates);
+        $this->assertArrayHasKey('EUR', $rates);
+    }
+
+    #[Test]
+    public function it_builds_historical_api_url_with_date_in_path()
+    {
+        $provider = new JsDelivrProvider();
+        $reflection = new \ReflectionClass($provider);
+        $method = $reflection->getMethod('getHistoricalApiUrl');
+        $method->setAccessible(true);
+
+        $url = $method->invoke($provider, \Illuminate\Support\Carbon::parse('2024-03-06'));
+
+        $this->assertEquals(
+            'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@2024-03-06/v1/currencies/uah.json',
+            $url
+        );
     }
 }

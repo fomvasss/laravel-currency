@@ -4,7 +4,7 @@ namespace Fomvasss\Currency\Console\Commands;
 
 use Fomvasss\Currency\Currency;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Carbon;
 
 class CurrencyRatesCommand extends Command
 {
@@ -13,9 +13,10 @@ class CurrencyRatesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'currency:rates 
-                            {--provider= : Rate provider to use (monobank, privatbank, exchangeratesapi, currencyapi, fixer)}
+    protected $signature = 'currency:rates
+                            {--provider= : Rate provider to use (alias from config or class name)}
                             {--currency= : Specific currency to show}
+                            {--date= : Show historical rates for this date (any format Carbon::parse understands)}
                             {--refresh : Clear cache and fetch fresh rates}';
 
     /**
@@ -32,21 +33,10 @@ class CurrencyRatesCommand extends Command
      */
     public function handle(Currency $currency): int
     {
-        if ($this->option('refresh')) {
-            $this->info('Clearing currency rates cache...');
-            Cache::forget('currency_rates_MonobankRateProvider');
-            Cache::forget('currency_rates_PrivatbankRateProvider');
-            Cache::forget('currency_rates_ExchangeRatesApiProvider');
-            Cache::forget('currency_rates_CurrencyApiProvider');
-            Cache::forget('currency_rates_FixerProvider');
-            $this->info('Cache cleared!');
-        }
-
         // Change provider if specified
         if ($provider = $this->option('provider')) {
             try {
-                $providerClass = $this->resolveProviderClass($provider);
-                $currency->setRateProvider(new $providerClass());
+                $currency->setRateProvider($provider);
                 $this->info("Using provider: {$provider}");
             } catch (\Exception $e) {
                 $this->error("Invalid provider: {$provider}");
@@ -54,15 +44,31 @@ class CurrencyRatesCommand extends Command
             }
         }
 
+        if ($this->option('refresh')) {
+            $this->info('Clearing currency rates cache...');
+            $currency->clearCache();
+            $this->info('Cache cleared!');
+        }
+
+        $date = $this->option('date') ? Carbon::parse($this->option('date')) : null;
+
+        if ($date && !$currency->supportsHistoricalRates()) {
+            $this->error(class_basename($currency->getRateProvider()) . ' does not support historical rates.');
+            return 1;
+        }
+
         $this->info('Base currency: ' . $currency->getBaseCurrency());
         $this->info('Provider: ' . class_basename($currency->getRateProvider()));
+        if ($date) {
+            $this->info('Date: ' . $date->format('Y-m-d'));
+        }
         $this->line('');
 
         // Show specific currency or all
         if ($currencyCode = $this->option('currency')) {
-            $this->showCurrency($currency, strtoupper($currencyCode));
+            $this->showCurrency($currency, strtoupper($currencyCode), $date);
         } else {
-            $this->showAllCurrencies($currency);
+            $this->showAllCurrencies($currency, $date);
         }
 
         return 0;
@@ -73,11 +79,14 @@ class CurrencyRatesCommand extends Command
      *
      * @param Currency $currency
      * @param string $code
+     * @param \DateTimeInterface|null $date
      * @return void
      */
-    protected function showCurrency(Currency $currency, string $code): void
+    protected function showCurrency(Currency $currency, string $code, ?\DateTimeInterface $date = null): void
     {
-        $rate = $currency->getRate($code, 'all');
+        $rate = $date
+            ? ($currency->getRatesAt($date, 'all')[$code] ?? null)
+            : ($currency->getRates('all')[$code] ?? null);
 
         if (!$rate) {
             $this->error("Currency {$code} not found or not supported by current provider.");
@@ -103,11 +112,12 @@ class CurrencyRatesCommand extends Command
      * Show all currency rates.
      *
      * @param Currency $currency
+     * @param \DateTimeInterface|null $date
      * @return void
      */
-    protected function showAllCurrencies(Currency $currency): void
+    protected function showAllCurrencies(Currency $currency, ?\DateTimeInterface $date = null): void
     {
-        $rates = $currency->getRates('all');
+        $rates = $date ? $currency->getRatesAt($date, 'all') : $currency->getRates('all');
 
         if (empty($rates)) {
             $this->warn('No rates available.');
@@ -135,24 +145,5 @@ class CurrencyRatesCommand extends Command
 
         $this->line('');
         $this->info('Total currencies: ' . count($rates));
-    }
-
-    /**
-     * Resolve provider class from name.
-     *
-     * @param string $name
-     * @return string
-     */
-    protected function resolveProviderClass(string $name): string
-    {
-        $providers = [
-            'monobank' => \Fomvasss\Currency\RateProviders\MonobankRateProvider::class,
-            'privatbank' => \Fomvasss\Currency\RateProviders\PrivatbankRateProvider::class,
-            'exchangeratesapi' => \Fomvasss\Currency\RateProviders\ExchangeRatesApiProvider::class,
-            'currencyapi' => \Fomvasss\Currency\RateProviders\CurrencyApiProvider::class,
-            'fixer' => \Fomvasss\Currency\RateProviders\FixerProvider::class,
-        ];
-
-        return $providers[strtolower($name)] ?? $name;
     }
 }

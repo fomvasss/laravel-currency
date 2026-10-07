@@ -37,7 +37,19 @@ return [
      * Default: 86400 seconds (1 day)
      */
     'cache_ttl_fallback' => env('CURRENCY_CACHE_TTL_FALLBACK', 86400),
-    
+
+    /**
+     * How long (seconds) an empty result is cached when the API is unavailable
+     * and no fallback rates exist, so a burst of calls doesn't hammer the API.
+     */
+    'cache_ttl_empty' => env('CURRENCY_CACHE_TTL_EMPTY', 60),
+
+    /**
+     * Cache TTL in seconds for historical (per-date) rates. null = cache forever
+     * (rates for a past date never change).
+     */
+    'cache_ttl_historical' => env('CURRENCY_CACHE_TTL_HISTORICAL'),
+
     /**
      * Default rate type for currency conversion.
      * Options: 'buy', 'sell', 'average'

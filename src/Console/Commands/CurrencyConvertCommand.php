@@ -4,6 +4,7 @@ namespace Fomvasss\Currency\Console\Commands;
 
 use Fomvasss\Currency\Currency;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 
 class CurrencyConvertCommand extends Command
 {
@@ -12,11 +13,12 @@ class CurrencyConvertCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'currency:convert 
+    protected $signature = 'currency:convert
                             {amount : Amount to convert}
                             {from : Source currency code}
                             {to : Target currency code}
                             {--rate=average : Rate type (buy, sell, average)}
+                            {--date= : Convert using the historical rate for this date (any format Carbon::parse understands)}
                             {--format : Format the output}';
 
     /**
@@ -37,9 +39,12 @@ class CurrencyConvertCommand extends Command
         $from = strtoupper($this->argument('from'));
         $to = strtoupper($this->argument('to'));
         $rateType = $this->option('rate');
+        $date = $this->option('date') ? Carbon::parse($this->option('date')) : null;
 
         try {
-            $converted = $currency->convert($amount, $from, $to, $rateType);
+            $converted = $date
+                ? $currency->convertAt($amount, $from, $to, $date, $rateType)
+                : $currency->convert($amount, $from, $to, $rateType);
 
             $this->line('');
             $this->info("Conversion Details:");
@@ -55,7 +60,13 @@ class CurrencyConvertCommand extends Command
 
             $this->line("Rate Type: {$rateType}");
 
-            $rate = $currency->getRate($from, $rateType);
+            if ($date) {
+                $this->line("Date: " . $date->format('Y-m-d'));
+                $rate = $currency->getRateAt($from, $date, $rateType);
+            } else {
+                $rate = $currency->getRate($from, $rateType);
+            }
+
             if ($rate) {
                 $this->line("Rate ({$from}): {$rate}");
             }

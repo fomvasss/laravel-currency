@@ -42,8 +42,8 @@ class CurrencyApiProviderTest extends TestCase
         $this->assertIsArray($rates);
         $this->assertArrayHasKey('USD', $rates);
         $this->assertArrayHasKey('EUR', $rates);
-        $this->assertEquals(0.025, $rates['USD']['buy']);
-        $this->assertEquals(0.025, $rates['USD']['sell']);
+        $this->assertEqualsWithDelta(40.0, $rates['USD']['buy'], 0.0001);
+        $this->assertEqualsWithDelta(40.0, $rates['USD']['sell'], 0.0001);
     }
 
     public function test_supports_custom_base_currency()

@@ -16,6 +16,25 @@ if (! function_exists('currency_convert')) {
     }
 }
 
+if (! function_exists('currency_convert_at')) {
+    /**
+     * Convert amount from one currency to another using rates as of a specific date.
+     *
+     * @param float $amount
+     * @param string $from
+     * @param string $to
+     * @param \DateTimeInterface|string $date
+     * @param string|null $rateType
+     * @return float
+     */
+    function currency_convert_at(float $amount, string $from, string $to, \DateTimeInterface|string $date, ?string $rateType = null): float
+    {
+        $date = is_string($date) ? \Illuminate\Support\Carbon::parse($date) : $date;
+
+        return app('currency')->convertAt($amount, $from, $to, $date, $rateType);
+    }
+}
+
 if (! function_exists('currency_format')) {
     /**
      * Format amount in specified currency.
@@ -36,10 +55,10 @@ if (! function_exists('currency_rate')) {
      * Get exchange rate for currency.
      *
      * @param string $currency
-     * @param string $rateType
+     * @param string|null $rateType
      * @return float|null
      */
-    function currency_rate(string $currency, string $rateType = 'average'): ?float
+    function currency_rate(string $currency, ?string $rateType = null): ?float
     {
         return app('currency')->getRate($currency, $rateType);
     }

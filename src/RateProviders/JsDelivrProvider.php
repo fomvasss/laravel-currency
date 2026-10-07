@@ -2,21 +2,28 @@
 
 namespace Fomvasss\Currency\RateProviders;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
+
 /**
  * jsDelivr CDN Rate Provider
- * 
+ *
  * Uses free currency API data delivered via jsDelivr CDN.
  * Data source: @fawazahmed0/currency-api
- * 
+ *
  * Note: This is a good fallback provider as it's free and has no rate limits,
  * but data may not be real-time (updated daily).
- * 
+ *
  * Supports 150+ currencies.
  */
-class JsDelivrProvider extends AbstractRateProvider
+class JsDelivrProvider extends AbstractRateProvider implements HistoricalRateProvider
 {
-    protected string $baseCurrency = 'EUR';
+    protected string $baseCurrency = 'UAH';
     protected string $baseUrl = 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1';
+
+    /**
+     * Synthetic buy/sell spread applied around the mid-market rate (jsDelivr has no buy/sell data).
+     */
+    protected float $spread = 0.01; // 1% spread
 
     /**
      * Get the API endpoint URL.
@@ -27,6 +34,23 @@ class JsDelivrProvider extends AbstractRateProvider
     {
         $currency = strtolower($this->baseCurrency);
         return "{$this->baseUrl}/currencies/{$currency}.json";
+    }
+
+    /**
+     * Get the API endpoint URL for historical rates as of a specific date.
+     *
+     * Dates are only available from 2024-03-06 onwards; earlier dates return 404,
+     * which is treated as "no rate for that date", not an error.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        $currency = strtolower($this->baseCurrency);
+        $baseUrl = str_replace('@latest', '@' . $date->format('Y-m-d'), $this->baseUrl);
+
+        return "{$baseUrl}/currencies/{$currency}.json";
     }
 
     /**
@@ -63,34 +87,20 @@ class JsDelivrProvider extends AbstractRateProvider
                 continue;
             }
 
+            if ((float) $rate <= 0) {
+                continue;
+            }
+
             // jsDelivr API returns inverse rates (UAH to other currencies)
             // We need to convert to: 1 foreign currency = X base currency
             $inverseRate = 1 / (float) $rate;
 
-            // Since we don't have buy/sell spread, use the same rate with small spread
-            $spread = 0.01; // 1% spread
             $rates[$code] = [
-                'buy' => $inverseRate * (1 - $spread / 2),
-                'sell' => $inverseRate * (1 + $spread / 2),
+                'buy' => $inverseRate * (1 - $this->spread / 2),
+                'sell' => $inverseRate * (1 + $this->spread / 2),
             ];
         }
 
         return $rates;
-    }
-
-    /**
-     * Get fallback rates when API fails.
-     * 
-     * Provides basic rates for major currencies.
-     *
-     * @return array
-     */
-    protected function getFallbackRates(): array
-    {
-        return [
-            'USD' => ['buy' => 41.0, 'sell' => 42.0],
-            'EUR' => ['buy' => 45.0, 'sell' => 46.0],
-            'GBP' => ['buy' => 52.0, 'sell' => 53.0],
-        ];
     }
 }

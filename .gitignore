@@ -8,3 +8,7 @@ Thumbs.db
 .vscode
 *.log
 coverage/
+.claude/
+/docs/dist
+/docs/.astro
+node_modules

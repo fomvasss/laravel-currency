@@ -2,13 +2,16 @@
 
 namespace Fomvasss\Currency\RateProviders;
 
+use Fomvasss\Currency\Contracts\HistoricalRateProvider;
+
 /**
  * Fixer.io provider (https://fixer.io/)
  * Requires API key, has free tier with 100 requests/month.
  */
-class FixerProvider extends AbstractRateProvider
+class FixerProvider extends AbstractRateProvider implements HistoricalRateProvider
 {
     protected ?string $apiKey = null;
+    protected string $apiUrl = 'https://data.fixer.io/api/latest';
 
     public function __construct(?string $apiKey = null, string $baseCurrency = 'UAH')
     {
@@ -23,7 +26,18 @@ class FixerProvider extends AbstractRateProvider
      */
     protected function getApiUrl(): string
     {
-        return "https://api.fixer.io/latest?access_key={$this->apiKey}&base={$this->baseCurrency}";
+        return "{$this->apiUrl}?access_key={$this->apiKey}&base={$this->baseCurrency}";
+    }
+
+    /**
+     * Get the API endpoint URL for historical rates as of a specific date.
+     *
+     * @param \DateTimeInterface $date
+     * @return string
+     */
+    protected function getHistoricalApiUrl(\DateTimeInterface $date): string
+    {
+        return dirname($this->apiUrl) . "/{$date->format('Y-m-d')}?access_key={$this->apiKey}&base={$this->baseCurrency}";
     }
 
     /**
@@ -39,7 +53,12 @@ class FixerProvider extends AbstractRateProvider
         if (isset($response['success']) && $response['success'] === true) {
             if (isset($response['rates']) && is_array($response['rates'])) {
                 foreach ($response['rates'] as $currency => $rate) {
-                    $rateValue = (float) $rate;
+                    if ((float) $rate <= 0) {
+                        continue;
+                    }
+
+                    // Fixer returns foreign units per 1 base unit; we store base units per 1 foreign unit
+                    $rateValue = 1 / (float) $rate;
 
                     // Fixer provides only mid-market rate
                     $rates[strtoupper($currency)] = [

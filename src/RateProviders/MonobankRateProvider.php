@@ -23,7 +23,7 @@ class MonobankRateProvider extends AbstractRateProvider
         578 => 'NOK',
         752 => 'SEK',
         756 => 'CHF',
-        036 => 'AUD',
+        36 => 'AUD',
         156 => 'CNY',
         949 => 'TRY',
     ];
@@ -54,10 +54,15 @@ class MonobankRateProvider extends AbstractRateProvider
                 $currencyCode = $this->currencyCodeMap[$item['currencyCodeA']] ?? null;
 
                 if ($currencyCode) {
-                    $rates[$currencyCode] = [
-                        'buy' => (float) ($item['rateBuy'] ?? $item['rateCross'] ?? 0),
-                        'sell' => (float) ($item['rateSell'] ?? $item['rateCross'] ?? 0),
-                    ];
+                    $buy = (float) ($item['rateBuy'] ?? $item['rateCross'] ?? 0);
+                    $sell = (float) ($item['rateSell'] ?? $item['rateCross'] ?? 0);
+
+                    if ($buy > 0 && $sell > 0) {
+                        $rates[$currencyCode] = [
+                            'buy' => $buy,
+                            'sell' => $sell,
+                        ];
+                    }
                 }
             }
         }
