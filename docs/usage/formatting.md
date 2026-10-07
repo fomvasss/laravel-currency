@@ -29,14 +29,11 @@ How the string is built, from the currency's entry in `currencies`:
 
 | Field | When missing from the currency's config |
 |---|---|
-| `precision` | `2` |
+| `precision` | `default_precision` |
 | `thousandSeparator` | `,` |
 | `decimalSeparator` | `.` |
 | `symbol` | the currency code |
 | `symbolPlacement` | `before` |
-
-> [!WARNING]
-> `format()` falls back to 2 decimals, not to `default_precision`. `convert()` and `getPrecision()` do use `default_precision`, so for a currency without its own `precision` and `default_precision = 0`, `convert()` returns a whole number while `format()` prints `.00`. Set `precision` on each currency you format.
 
 The amount is formatted by PHP's `number_format()`: no locale, no negative-number styling (`-5` gives `$ -5.00`). For locale-aware output use PHP `intl` (`NumberFormatter`) and keep this package for the rates.
 

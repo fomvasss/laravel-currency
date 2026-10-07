@@ -226,6 +226,16 @@ class CurrencyTest extends TestCase
         $this->assertEquals('€ 1.234,56', $formatted);
     }
 
+    public function test_format_falls_back_to_default_precision()
+    {
+        $config = config('currency');
+        $config['default_precision'] = 0;
+        unset($config['currencies']['USD']['precision']);
+        $currency = new Currency($this->provider, $config);
+
+        $this->assertEquals('$ 1,235', $currency->format(1234.56, 'USD'));
+    }
+
     public function test_is_supported_returns_true_for_supported_currency()
     {
         $this->assertTrue($this->currency->isSupported('USD'));
