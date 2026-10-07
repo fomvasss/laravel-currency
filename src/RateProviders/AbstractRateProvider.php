@@ -198,10 +198,20 @@ abstract class AbstractRateProvider implements RateProvider
 
                 $rates = $this->parseResponse($json);
 
-                // Store successful rates in long-term fallback cache
-                if (!empty($rates)) {
-                    Cache::put($fallbackCacheKey, $rates, $fallbackTtl);
+                // a 2xx without rates is a failure too: Fixer reports an invalid key or plan
+                // restrictions as HTTP 200 with "success": false
+                if (empty($rates)) {
+                    event(new CurrencyRateFetchFailed(
+                        static::class,
+                        'API returned no rates',
+                        false
+                    ));
+
+                    return $this->tryFallbackCache($fallbackCacheKey);
                 }
+
+                // Store successful rates in long-term fallback cache
+                Cache::put($fallbackCacheKey, $rates, $fallbackTtl);
 
                 return $rates;
             }

@@ -104,6 +104,24 @@ class AbstractRateProviderTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_success_status_without_rates_falls_back_to_cache_and_dispatches_event()
+    {
+        Event::fake([CurrencyRateFetchFailed::class]);
+
+        Cache::put('currency_rates_MonobankRateProvider_fallback', [
+            'USD' => ['buy' => 26.0, 'sell' => 26.5],
+        ], 86400);
+
+        Http::fake([
+            'api.monobank.ua/*' => Http::response([], 200),
+        ]);
+
+        $rates = (new MonobankRateProvider())->getRates();
+
+        $this->assertEquals(['buy' => 26.0, 'sell' => 26.5], $rates['USD']);
+        Event::assertDispatched(CurrencyRateFetchFailed::class, fn (CurrencyRateFetchFailed $event) => $event->errorMessage === 'API returned no rates');
+    }
+
     public function test_clear_cache_removes_both_keys()
     {
         Cache::put('currency_rates_MonobankRateProvider', ['USD' => ['buy' => 1, 'sell' => 1]], 3600);

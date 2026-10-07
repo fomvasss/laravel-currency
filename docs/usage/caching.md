@@ -9,14 +9,14 @@ On `getRates()` (and everything built on it — `convert()`, `getRate()`, `isSup
 1. Read `currency_rates_{ProviderClass}` from the cache. Found → return it. `{ProviderClass}` is the short class name for built-in providers (`NbuRateProvider`) and the full name with `_` instead of `\` for any other (`App_Currency_NbuRateProvider`).
 2. Otherwise call the API (`Http::timeout(10)`).
 3. **Success** with rates → store them in the cache for `cache_ttl` (1 h) and in the fallback key `currency_rates_{ProviderClass}_fallback` for `cache_ttl_fallback` (1 day).
-4. **Failure** (exception, non-2xx status, non-JSON body) → use the fallback key if it has rates, otherwise the provider's static `getFallbackRates()` (empty for every built-in provider).
+4. **Failure** (exception, non-2xx status, non-JSON body, a 2xx response without rates) → use the fallback key if it has rates, otherwise the provider's static `getFallbackRates()` (empty for every built-in provider).
 5. Whatever came out of 3–4 is stored under the main key: fetched rates for `cache_ttl`; fallback, static or empty rates for `cache_ttl_empty` (60 s).
 
 Consequences:
 
 - When the API is down but the fallback cache is warm, rates up to `cache_ttl_fallback` old are served. The API is retried every `cache_ttl_empty`, so fresh rates come back within a minute of its recovery. Before 2.7.3 the fallback rates were cached for the full `cache_ttl`.
 - When nothing is cached at all, rates are empty: `convert()` throws, `getRate()` returns `null`. The next API attempt happens after `cache_ttl_empty`, so a burst of requests doesn't hammer a dead API.
-- A 2xx response that parses to no rates is not treated as a failure: no event, no fallback cache — the empty result is cached for `cache_ttl_empty`. Fixer, for example, reports errors (invalid key, plan restrictions) as HTTP 200 with `"success": false`.
+- A 2xx response that parses to no rates is a failure since 2.7.6: the event fires and the fallback cache is used. Fixer, for example, reports errors (invalid key, plan restrictions) as HTTP 200 with `"success": false`.
 
 `cache_ttl` can also be overridden per provider instance:
 
@@ -63,7 +63,7 @@ php artisan currency:rates --provider=nbu --refresh
 
 A failed **current-rate** fetch dispatches **two** events:
 
-1. `usingFallback = false`, `errorMessage` = the exception message, `API returned error status: 503` or `API returned a non-array response`;
+1. `usingFallback = false`, `errorMessage` = the exception message, `API returned error status: 503`, `API returned a non-array response` or `API returned no rates`;
 2. `usingFallback = true`, with either `Using fallback cached rates` and the cached rates, or `No cached rates available, using static fallback` and the static rates — `[]` for every built-in provider, i.e. **nothing is actually served**.
 
 A failed **historical** fetch dispatches one event with `usingFallback = false` and `date` set.
