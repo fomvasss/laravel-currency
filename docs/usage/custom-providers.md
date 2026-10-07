@@ -341,7 +341,7 @@ class SafeProvider extends AbstractRateProvider
 }
 ```
 
-Non-empty static rates are cached under the main key for the full `cache_ttl`, like fetched ones — see [Caching & failures](caching.md).
+Static rates are cached under the main key for `cache_ttl_empty`, like fallback ones, so the API is retried soon — see [Caching & failures](caching.md).
 
 ### Other extension points
 

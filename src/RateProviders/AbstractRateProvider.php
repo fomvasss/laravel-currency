@@ -12,6 +12,7 @@ abstract class AbstractRateProvider implements RateProvider
 {
     protected string $baseCurrency = 'UAH';
     protected ?int $cacheTtl = null;
+    protected bool $usedFallback = false;
 
     /**
      * Get the API endpoint URL.
@@ -156,11 +157,12 @@ abstract class AbstractRateProvider implements RateProvider
             return $rates;
         }
 
+        $this->usedFallback = false;
         $rates = $this->fetchRatesFromApi();
 
-        // An empty result (API down, no fallback) is cached only briefly so the next
+        // An empty or fallback result (API down) is cached only briefly so the next
         // request retries soon, but a burst of calls doesn't hammer the API.
-        $ttl = empty($rates) ? config('currency.cache_ttl_empty', 60) : $this->getCacheTtl();
+        $ttl = empty($rates) || $this->usedFallback ? config('currency.cache_ttl_empty', 60) : $this->getCacheTtl();
 
         Cache::put($cacheKey, $rates, $ttl);
 
@@ -235,6 +237,8 @@ abstract class AbstractRateProvider implements RateProvider
      */
     protected function tryFallbackCache(string $fallbackCacheKey): array
     {
+        $this->usedFallback = true;
+
         // Try to get from long-term cache
         $fallbackRates = Cache::get($fallbackCacheKey);
         
