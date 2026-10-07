@@ -384,6 +384,15 @@ class CurrencyTest extends TestCase
         $this->assertEquals(92.64, $result);
     }
 
+    public function test_historical_methods_accept_a_date_string()
+    {
+        $currency = $this->historicalCurrency();
+
+        $this->assertEquals(3775.0, $currency->convertAt(100, 'USD', 'UAH', '2024-01-15'));
+        $this->assertEquals(37.75, $currency->getRateAt('USD', '2024-01-15'));
+        $this->assertArrayHasKey('USD', $currency->getRatesAt('2024-01-15'));
+    }
+
     public function test_get_rate_at_for_base_currency_is_one()
     {
         $currency = $this->historicalCurrency();

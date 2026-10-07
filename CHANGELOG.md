@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 2.8.0 - 2026-10-07
+
+### Added
+- `convertAt()`, `getRateAt()` and `getRatesAt()` accept the date as a string (parsed with `Carbon::parse()`), like `currency_convert_at()`. Before, a string threw a `TypeError`
+
 ## 2.7.6 - 2026-10-07
 
 ### Fixed

@@ -29,8 +29,6 @@ if (! function_exists('currency_convert_at')) {
      */
     function currency_convert_at(float $amount, string $from, string $to, \DateTimeInterface|string $date, ?string $rateType = null): float
     {
-        $date = is_string($date) ? \Illuminate\Support\Carbon::parse($date) : $date;
-
         return app('currency')->convertAt($amount, $from, $to, $date, $rateType);
     }
 }

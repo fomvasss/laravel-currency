@@ -8,6 +8,10 @@ After an upgrade, compare your published `config/currency.php` with the package'
 php artisan vendor:publish --tag=currency-config --force   # overwrites; back up your file first
 ```
 
+## 2.8
+
+`convertAt()`, `getRateAt()` and `getRatesAt()` of `Currency` accept a string date. A subclass of `Currency` that overrides one of them must widen `$date` to `\DateTimeInterface|string`.
+
 ## 2.7.5
 
 Providers outside the package (your own, or subclasses of built-in ones) are cached under their full class name: `currency_rates_App_Currency_MyProvider` instead of `currency_rates_MyProvider`. Their rates, fallback copy and historical rates are fetched again once after the upgrade; if the API is down right then, there is no fallback copy yet. Built-in providers keep their keys.
